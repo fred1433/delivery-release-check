@@ -197,7 +197,7 @@ function renderTicket(o, r) {
       <div class="box"><span class="blabel">Payments recorded</span><span class="entry">${st.payments.length ? st.payments.map((p) => money(p.amount)).join(" + ") : "Order total only"}</span><span class="sub">${st.payments.length ? "for " + esc(st.payments[0].for) : "no upgrade payment"}</span></div>
       <div class="box"><span class="blabel">Freight</span><span class="entry">${st.released ? (st.freight === "at installer" ? "At the installer" : st.freight === "at terminal" ? "At the terminal" : st.freight === "delivered" ? "Delivered" : "Released") : "Not released"}</span><span class="sub">${st.released ? "released by your team, naming its holds" : "a checklist PASS does not release anything"}</span></div>
       <div class="box"><span class="blabel">Customer delivery and installation</span><span class="entry">${st.customerDelivery === "delivered" ? "Delivered" : "Open"}</span><span class="sub">${st.installation === "installed" ? "installed" : "not installed"}</span></div>
-      ${plans.length ? `<div class="box wide"><span class="blabel">Delivery plan on file</span><span class="entry small">Version ${plans[0].version}${st.approvals[plans[0].version] ? `, approved in writing by ${esc(st.approvals[plans[0].version].by)}` : ", not approved"}</span><span class="sub">${esc(plans[0].summary)}</span></div>` : ""}
+      ${plans.length ? `<div class="box wide"><span class="blabel">Delivery plan on file</span><span class="entry small">Version ${plans[0].version}${st.approvals[plans[0].version] ? (res.issues.some((i) => i.id === "authorization" && i.kind === "hold") ? `, approved by ${esc(st.approvals[plans[0].version].by)} but no longer valid for this order` : `, approved in writing by ${esc(st.approvals[plans[0].version].by)}`) : ", not approved"}</span><span class="sub">${esc(plans[0].summary)}</span></div>` : ""}
     </div>
 
     ${st.earlierMessages.map((m) => `<div class="msg-box earlier"><span class="blabel">Customer message, ${m.at.slice(5, 10).replace("-", "/")} <em>(fictional; describes the earlier address, not used for this one)</em></span><p class="msg-text">${esc(scenarios.messages[m.message])}</p></div>`).join("")}
@@ -258,7 +258,9 @@ document.getElementById("now").addEventListener("click", (e) => {
     const n = state.step[o.id] + 1;
     const h = state.history[o.id];
     const next = appendStep(o, productOf(o), h, n, ctx).map((ev, i) => (i < h.length ? ev : { ...ev, at: stamp() }));
-    state.step[o.id] = n;
+    // A refused release is not a completed step: the counter stays where it was.
+    const refused = n === 4 && !run(o, next).state.released;
+    if (!refused) state.step[o.id] = n;
     apply(o, next);
   }
   if (b.dataset.act === "variant") {

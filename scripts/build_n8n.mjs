@@ -69,7 +69,7 @@ return [{ json: {
   // A checklist PASS is not a release: release_authorized is true only when a release event succeeded with named holds.
   release_authorized: !!last.release,
   has_new_actions: last.actions.length > 0,
-  release_decision: last.duplicate || r.verdict !== 'PASS' ? 'STOP' : last.status && last.status.released && ev.type !== 'release_requested' ? 'NO_ACTION' : 'CONTINUE',
+  release_decision: last.duplicate || last.refused || r.verdict !== 'PASS' ? 'STOP' : last.status && last.status.released && ev.type !== 'release_requested' ? 'NO_ACTION' : 'CONTINUE',
 } }];
 `;
 

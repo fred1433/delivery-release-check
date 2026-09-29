@@ -51,7 +51,7 @@
     <h2>What is and is not connected</h2>
     <p>The browser demonstrates event replay without external writes. The repository includes an n8n test workflow and a separately tested persistent action ledger. The production action executor is not connected. A checklist PASS is not a release; only your team releases.</p>
     <details class="api"><summary>API details</summary>
-      <p>Shopify's fulfillmentOrderReleaseHold releases every hold when holdIds is left out, so the code refuses any release that does not name the holds it owns. Deliveries are deduplicated on the webhook id and business events on the event id; neither kind of duplicate changes the order. monday.com's idempotency cache lasts 30 minutes, which is why actions need a persistent record. The <a href="https://github.com/fred1433/delivery-release-check">repository</a> has the n8n workflow, run on a clean n8n 2.41, and 74 tests.</p>
+      <p>Shopify's fulfillmentOrderReleaseHold releases every hold when holdIds is left out, so the code refuses any release that does not name the holds it owns. Deliveries are deduplicated on the webhook id and business events on the event id; neither kind of duplicate changes the order. monday.com's idempotency cache lasts 30 minutes, which is why actions need a persistent record. The <a href="https://github.com/fred1433/delivery-release-check">repository</a> has the n8n workflow, run on a clean n8n 2.41, and 79 tests.</p>
     </details>
   </div>
   <div class="note-col">

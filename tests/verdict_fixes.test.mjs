@@ -165,3 +165,36 @@ test("E. replaying the full history with a persistent action ledger rebuilds the
   assert.equal(again.result.verdict, "HOLD");
   assert.equal(again.state.payments.length, 1);
 });
+
+test("F. inherited object keys are not event types: __proto__, constructor, toString stop cleanly", () => {
+  for (const type of ["__proto__", "constructor", "toString", "hasOwnProperty"]) {
+    assert.match(validateEvent({ type, id: "x", at: at(0) }), /unsupported/, type);
+  }
+});
+
+test("F. a refused plan re-issue never answers CONTINUE in n8n", () => {
+  const code = JSON.parse(text("n8n/workflow.json")).nodes.find((n) => n.name === "Decide").parameters.jsCode;
+  assert.match(code, /last\.duplicate \|\| last\.refused \|\| r\.verdict !== 'PASS' \? 'STOP'/);
+});
+
+test("B. a change between the plan and the approval is described as such", () => {
+  const s3 = o.walkthrough.find((w) => w.step === 3).events;
+  const h = [...walk(2), ...s3.slice(0, 2), edit("stairs_count", 40, 1), { ...s3[2], at: at(2) }];
+  const f = replay(o, p, h, ctx).result.issues.find((i) => i.id === "authorization").finding;
+  assert.match(f, /between the plan and the approval/);
+});
+
+test("C. findings never capitalize a clause mid-sentence and always open with a capital", () => {
+  const r = replay(o, p, o.events, ctx);
+  assert.match(r.result.issues.find((i) => i.id === "access:path_photos").finding, /^The message says/);
+  const b = order("1044");
+  const evs = [{ type: "order_created", id: "c1", at: at(0), service: "Garage Installation" }, edit("narrowest_door_in", 36, 1), edit("ledge_or_step_at_garage", true, 2)];
+  const g = replay(b, product(b.handle), evs, ctx).result.issues.find((i) => i.id === "garage-install").finding;
+  assert.doesNotMatch(g, /; [A-Z]/);
+});
+
+test("UI. a refused release does not count as a completed step; a stale approval is not shown as approved", () => {
+  const app = text("site/app.js");
+  assert.match(app, /const refused = n === 4 && !run\(o, next\)\.state\.released;/);
+  assert.match(app, /but no longer valid for this order/);
+});

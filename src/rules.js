@@ -101,11 +101,14 @@ const VALUE_WORDS = { true: "yes", false: "none", mixed_soft: "soft when wet", r
 const fmt = (v) => (String(v) in VALUE_WORDS ? VALUE_WORDS[String(v)] : String(v).replace(/_/g, " "));
 
 // Where a fact came from, in words: the customer's own words, or who entered it on the ticket.
+// Always starts in lower case; callers capitalize it when it opens a sentence.
 export function said(f, what) {
-  if (!f) return `${what}: not on file`;
+  const w = what.charAt(0).toLowerCase() + what.slice(1);
+  if (!f) return `${w}: not on file`;
   if (f.by === "message") return `the message says "${bare(f.quote)}"`;
-  return `${what} entered on this ticket (${f.by}): ${fmt(f.value)}`;
+  return `${w} entered on this ticket (${f.by}): ${fmt(f.value)}`;
 }
+const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
 // ---------- Facts from customer messages ----------
 // A quote proves where a fact came from, not that it was read correctly; these guards catch what code can catch.
@@ -167,7 +170,7 @@ export const EVENT_FIELDS = {
 export function validateEvent(ev) {
   if (!ev || typeof ev !== "object") return "event missing";
   for (const k of ["type", "id", "at"]) if (typeof ev[k] !== "string" || !ev[k]) return `event needs ${k}`;
-  const need = EVENT_FIELDS[ev.type];
+  const need = Object.hasOwn(EVENT_FIELDS, ev.type) ? EVENT_FIELDS[ev.type] : null;
   if (!need) return `unsupported event type "${ev.type}"`;
   for (const k of need) if (ev[k] === undefined || ev[k] === null || ev[k] === "") return `${ev.type} needs ${k}`;
   if (ev.type === "carrier_update") {
@@ -209,7 +212,7 @@ export function evaluate(st) {
       { key: "room_location", ok: !!where, label: "Where it goes", ask: "Which room will it go in, and on which floor?" },
       { key: "narrowest_door_in", ok: !!f("narrowest_door_in"), label: "Narrowest door width", ask: "What is the width of the narrowest door on the way in, in inches?" },
       photos && photos.value === "sent"
-        ? { key: "path_photos", ok: false, label: "Path photos: customer says sent, not yet reviewed", finding: `${said(photos, "Path photos")}. Nobody has confirmed receiving and reviewing them.`, owner: "Ops (confirm the photos arrived and review them)" }
+        ? { key: "path_photos", ok: false, label: "Path photos: customer says sent, not yet reviewed", finding: `${cap(said(photos, "Path photos"))}. Nobody has confirmed receiving and reviewing them.`, owner: "Ops (confirm the photos arrived and review them)" }
         : { key: "path_photos", ok: photos && photos.value === "received", label: photos && photos.value === "promised" ? "Path photos (promised, not received)" : "Photos of the path and turns", ask: "Could you send photos of the path from the street, including every turn?" },
       { key: "stairs_count", ok: f("stairs_count") != null, label: "Number of steps", ask: "How many steps are there in total between the street and the room?" },
     ];
@@ -236,7 +239,7 @@ export function evaluate(st) {
     if (ledge && ledge.value === true) bad.push(said(ledge, "Lip at the garage door"));
     if (door && Number(door.value) < 60) bad.push(`${said(door, "Narrowest door")}, under the 60 in path`);
     if (bad.length) add({ id: "garage-install", kind: "hold", group: "mismatch", title: "Garage installation path", finding: `Garage installation needs a path at least 60 in wide with no ledge or stair; ${bad.join("; ")}.`, quotes: [Q.garageInstall], owner: "Ops (another service may fit)" });
-    else if (!ledge) add({ id: "access:garage-ledge", kind: "hold", group: "access", title: "Lip or step at the garage door", finding: `${said(null, "Lip or step at the garage door")}; garage installation needs a path with no ledge.`, quotes: [Q.garageInstall], ask: "Is there any lip or step at the garage door?", owner: "Ops" });
+    else if (!ledge) add({ id: "access:garage-ledge", kind: "hold", group: "access", title: "Lip or step at the garage door", finding: `${cap(said(null, "Lip or step at the garage door"))}; garage installation needs a path with no ledge.`, quotes: [Q.garageInstall], ask: "Is there any lip or step at the garage door?", owner: "Ops" });
   }
 
   // Published size against the narrowest door: a feasibility question, never "impossible".
@@ -339,7 +342,11 @@ export function evaluate(st) {
       add({ id: "authorization", kind: "pass", title: "Delivery plan and written approval", finding: `Plan version ${current.version} approved by ${approval.by} (${approval.channel}, ${approval.at.slice(0, 16).replace("T", " ")}): "${approval.text}"`, proposed: !twoStep });
     } else {
       let finding;
-      if (approval) finding = `Plan version ${current.version} was approved by ${approval.by}, but ${diffText(voided[current.version] || drift)} changed afterwards. That approval no longer covers this order, even if the change is undone: a new plan version needs a new approval.`;
+      if (approval) {
+        const v = voided[current.version];
+        const before = v && v.when === "before";
+        finding = `Plan version ${current.version} was approved by ${approval.by}, but ${diffText(v ? v.diff : drift)} changed ${before ? "between the plan and the approval" : "afterwards"}. That approval does not cover this order, even if the change is undone: a new plan version needs a new approval.`;
+      }
       else if (current && drift.length) finding = `Plan version ${current.version} no longer matches the order: ${diffText(drift)}. Issue a new version.`;
       else if (current) finding = `Plan version ${current.version} was sent; no written approval of it yet.`;
       else finding = reply ? `The message says "${bare(reply.quote)}". No plan with crew, scope, price and timing has been confirmed yet, so this is a preliminary reply, not approval.` : "No plan with crew, scope, price and timing confirmed yet.";
@@ -471,6 +478,7 @@ export function replay(order, product, events, ctx, ledger = new MemoryLedger())
       case "plan_approved":
         if (!st.plans[ev.version]) { entry.effects.push(`Approval for plan version ${ev.version}, which was never issued: not recorded.`); entry.refused = true; break; }
         st.approvals[ev.version] = { ...ev };
+        { const d = snapshotDiff(st.plans[ev.version].snapshot, snapshotOf(st)); if (d.length) st.voided[ev.version] = { diff: d, when: "before" }; }
         entry.effects.push(`${ev.by} approved plan version ${ev.version} in writing (${ev.channel}).`);
         break;
       case "destination_changed": {
@@ -510,7 +518,7 @@ export function replay(order, product, events, ctx, ledger = new MemoryLedger())
     for (const v of Object.keys(st.approvals)) {
       if (st.voided[v]) continue;
       const d = snapshotDiff(st.plans[v].snapshot, snapshotOf(st));
-      if (d.length) st.voided[v] = d;
+      if (d.length) st.voided[v] = { diff: d, when: "after" };
     }
     result = evaluate(st);
     {
