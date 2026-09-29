@@ -46,7 +46,7 @@
   </div>
   <div class="note-col">
     <h2>Where it would run</h2>
-    <p>A HOLD written to monday.com is a warning, not a lock. In production the check would sit on the route that actually releases a shipment. Shopify's fulfillmentOrderReleaseHold releases every hold when holdIds is left out, so the code refuses any release that does not name the holds it owns. Duplicates are caught on the webhook id and recorded in a durable action log, because monday.com's idempotency cache lasts 30 minutes. The <a href="https://github.com/fred1433/delivery-release-check">repository</a> has the n8n workflow, run on a clean n8n 2.41 with these same orders, and 43 tests.</p>
+    <p>A HOLD written to monday.com is a warning, not a lock. In production the check would sit on the route that actually releases a shipment. Shopify's fulfillmentOrderReleaseHold releases every hold when holdIds is left out, so the code refuses any release that does not name the holds it owns. Duplicates are caught on the webhook id and recorded in a durable action log, because monday.com's idempotency cache lasts 30 minutes. The <a href="https://github.com/fred1433/delivery-release-check">repository</a> has the n8n workflow, run on a clean n8n 2.41 with these same orders, and 56 tests.</p>
   </div>
   <div class="note-col">
     <h2>What it does not do</h2>

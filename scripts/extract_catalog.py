@@ -128,7 +128,16 @@ def main():
         meas = (ld.get("hasMeasurement") or {}).get("value")
         weight_line = next((l for l in lines if l.startswith("Product Weight:") and "lb" in l
                             and ld.get("weight") and l.split(":")[1].strip().startswith(str(ld.get("weight")).split(".")[0])), None)
-        dims_line = next((l for l in lines if l.startswith("Dimensions:") and '" L x' in l), None)
+        schema_dims = dims(meas)
+        want = sorted(v for v in (schema_dims or {}).values() if v) if schema_dims else []
+        dims_line = None
+        visible = None
+        for l in lines:
+            m = re.match(r'Dimensions: ([\d.]+)" ?L x ([\d.]+)" ?W x ([\d.]+)" ?H', l)
+            if m and sorted(float(x) for x in m.groups()) == want:
+                dims_line = l
+                visible = {"length": float(m.group(1)), "width": float(m.group(2)), "height": float(m.group(3))}
+                break
         products.append({
             "handle": h,
             "url": f"{BASE}/products/{h}",
@@ -138,7 +147,8 @@ def main():
             "shopify_lb": round(v["grams"] / 453.59237, 1),
             "page_weight_lb": float(ld["weight"]) if ld.get("weight") else None,
             "page_weight_quote": weight_line,
-            "dimensions_in": dims(meas),
+            "dimensions_in": visible or schema_dims,
+            "dimensions_source": "visible text on the product page" if visible else "schema.org data on the product page",
             "dimensions_quote": meas,
             "dimensions_text": dims_line,
             "condition": after(lines, "Condition:"),

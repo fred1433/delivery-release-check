@@ -77,8 +77,11 @@ a:hover { text-decoration-color: currentColor; }
 .walk .act:hover { background: #f7ecb8; }
 .w-change { margin: 16px 0 0; font-size: 16px; line-height: 1.5; max-width: 80ch; }
 .w-change.quiet { color: rgba(252, 252, 249, 0.75); }
-.variant { display: inline-flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 14.5px; cursor: pointer; }
-.variant input { accent-color: var(--canary); width: 16px; height: 16px; }
+.variant { display: block; margin-top: 14px; font: inherit; font-size: 14.5px; font-weight: 600; color: var(--canary); background: none; border: 1px solid rgba(241, 227, 154, 0.55); border-radius: 3px; padding: 7px 12px; cursor: pointer; text-align: left; }
+.variant:hover { background: rgba(241, 227, 154, 0.1); }
+.w-note { margin: 14px 0 0; font-size: 14.5px; color: var(--canary); }
+.msg-box.earlier { opacity: 0.6; border-left-style: dashed; }
+select:disabled, input:disabled { color: var(--carbon-soft); border-bottom-style: solid; border-bottom-color: var(--form-rule); cursor: not-allowed; }
 .walk .reset { margin-top: 10px; display: block; color: rgba(252, 252, 249, 0.8); }
 
 /* Ticket */
@@ -194,7 +197,7 @@ input::placeholder { color: var(--carbon-faint); }
   .lede { font-size: 17px; }
   .desk { grid-template-columns: minmax(0, 1fr); padding: 6px 16px 48px; gap: 16px; }
   .spike { position: static; margin: 0 -16px; }
-  .spike ol { grid-auto-flow: column; grid-auto-columns: 190px; overflow-x: auto; padding: 6px 16px 12px; scroll-snap-type: x mandatory; }
+  .spike ol { grid-auto-flow: column; grid-auto-columns: 190px; overflow-x: auto; padding: 6px 16px 12px; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; }
   .stub { scroll-snap-align: start; }
   .stub:hover { transform: none; }
   .stub.is-current { transform: translateY(-4px); box-shadow: 0 1px 0 var(--concrete-deep), 0 -3px 0 var(--form) inset; }

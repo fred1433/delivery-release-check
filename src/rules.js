@@ -62,9 +62,11 @@ export const LABELS = {
   feasibility: "REVIEW: feasibility decision needed",
   eligibility: "REVIEW: delivery eligibility unconfirmed",
   date: "REVIEW: requested date needs your team",
+  afterRelease: "HOLD: changed after release",
   pass: "PASS: this checklist is complete; operational release remains with your team",
 };
 
+const LOCATION_FACTS = ["room_location", "floor_or_stairs_described", "stairs_count", "narrowest_door_in", "path_photos", "driveway_surface", "ledge_or_step_at_garage"];
 const ROOM_SERVICE = /Any Room|Room of Choice|Garage Installation|2 Step/;
 const NUMBER_WORDS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen", "twenty"];
 
@@ -154,9 +156,10 @@ export function evaluate(st) {
       { key: "path_photos", ok: photos && photos.value === "sent", label: photos && photos.value === "promised" ? "Path photos (promised, not received)" : "Photos of the path and turns", ask: "Could you send photos of the path from the street, including every turn?" },
       { key: "stairs_count", ok: f("stairs_count") != null, label: "Number of steps", ask: "How many steps are there in total between the street and the room?" },
     ];
+    const cleared = st.cleared || {};
     for (const n of need) {
       if (n.ok) continue;
-      add({ id: `access:${n.key}`, kind: "hold", group: "access", title: n.label, finding: n.key === "stairs_count" && f("floor_or_stairs_described") ? `The message describes "${bare(f("floor_or_stairs_described").quote)}", which is a floor, not a step count.` : "Not on file.", quotes: [Q.accessFacts, Q.priorToShipping, Q.accessBeforeBooking], ask: n.ask, owner: "Ops" });
+      add({ id: `access:${n.key}`, kind: "hold", group: "access", title: n.label, finding: cleared[n.key] ? `Cleared on this ticket by ${cleared[n.key]}; not on file.` : n.key === "stairs_count" && f("floor_or_stairs_described") ? `The message describes "${bare(f("floor_or_stairs_described").quote)}", which is a floor, not a step count.` : "Not on file.", quotes: [Q.accessFacts, Q.priorToShipping, Q.accessBeforeBooking], ask: n.ask, owner: "Ops" });
     }
   }
 
@@ -164,7 +167,7 @@ export function evaluate(st) {
   const steps = f("stairs_count");
   if (steps && /Ground Level \(0-3 Steps\)/.test(service) && Number(steps.value) > 3) {
     const carry = product.delivery_options.find((o) => /Stair Carry/.test(o.name));
-    add({ id: "steps", kind: "hold", group: "mismatch", title: "Steps against the service paid for", finding: `Paid for ground level (0 to 3 steps); the customer describes ${steps.value} steps.` + (carry && chosen ? ` The stair carry service on this machine is ${money(carry.price)}.` : ""), evidence: steps, quotes: [Q.groundLevel, Q.stairCarry], ask: "Your message mentions more than 3 steps; the ground-level service covers 3 or fewer. May we move the order to the stair-carry service?", owner: "Ops (a price change needs the customer's OK)" });
+    add({ id: "steps", kind: "hold", group: "mismatch", title: "Steps against the service paid for", finding: `Paid for ground level (0 to 3 steps); the customer describes ${steps.value} steps.` + (carry && chosen ? ` The stair carry service on this machine is ${money(carry.price)}.` : ""), evidence: steps, quotes: [Q.groundLevel, Q.stairCarry], ask: steps.by === "message" ? "Your message mentions more than 3 steps; the ground-level service covers 3 or fewer. May we move the order to the stair-carry service?" : `We have ${steps.value} steps on file between the street and the room; the ground-level service covers 3 or fewer. May we move the order to the stair-carry service?`, owner: "Ops (a price change needs the customer's OK)" });
   }
   if (steps && /Garage Installation/.test(service) && Number(steps.value) > 0) {
     add({ id: "steps", kind: "hold", group: "mismatch", title: "Steps against the service paid for", finding: `Garage installation needs a path with no ledges or stairs; the customer describes ${steps.value} step(s).`, evidence: steps, quotes: [Q.garageInstall], owner: "Ops" });
@@ -175,8 +178,17 @@ export function evaluate(st) {
   if (room && door) {
     const d = product.dimensions_in || {};
     const known = [d.length, d.width, d.height].filter((x) => typeof x === "number");
-    if (/^Fully Assembled/.test(product.ships_as || "") && known.length === 3 && Math.min(...known) > Number(door.value)) {
-      add({ id: "door", kind: "review", group: "feasibility", title: "Published size against the narrowest door", finding: `Ships fully assembled at ${d.length} × ${d.width} × ${d.height} in; the smallest side is wider than the ${door.value} in door. Whether another transport configuration works is your crew's call.`, evidence: door, owner: "Ops" });
+    const ships = product.ships_as || "";
+    const size = `${d.length ?? "?"} × ${d.width ?? "?"} × ${d.height ?? "?"} in`;
+    const title = "Published size against the narrowest door";
+    if (/^(Fully|Mostly) Assembled/.test(ships) && known.length === 3) {
+      const smallest = Math.min(...known);
+      if (smallest > Number(door.value)) {
+        const mostly = /^Mostly/.test(ships);
+        add({ id: "door", kind: "review", group: "feasibility", title, finding: `Ships ${mostly ? "mostly assembled, arms removed," : "fully assembled"} at ${size}; even the smallest side (${smallest} in) is wider than the ${door.value} in door.${mostly ? " With the arms off the frame may still be close to this size." : ""} Whether another transport configuration works is your crew's call.`, evidence: door, owner: "Ops" });
+      }
+    } else {
+      add({ id: "door", kind: "info", title, finding: `Not compared: this machine ships "${ships.replace(/ \(.*\)$/, "").toLowerCase()}" and ${known.length < 3 ? "one published dimension is blank" : "the size of what arrives is not published"}. Your crew checks the ${door.value} in door.` });
     }
   }
 
@@ -250,21 +262,25 @@ export function evaluate(st) {
   // Authorization: a confirmed plan for this exact machine, scope and address, and the customer's written OK on that version.
   if (room) {
     const current = Object.values(plans).filter((pl) => pl.for.service === service && pl.for.zip === zip).sort((a, b) => b.version - a.version)[0];
-    const approved = current && approvals[current.version];
-    const stale = Object.values(approvals).find((a) => !current || a.version !== current.version);
+    const voided = st.voided || {};
+    const approved = current && approvals[current.version] && !voided[current.version] ? approvals[current.version] : null;
+    const stale = Object.values(approvals).find((a) => voided[a.version] || !current || a.version !== current.version);
     const reply = f("approval_reply");
     if (!approved) {
       let finding;
-      if (stale) finding = `Plan version ${stale.version} was approved by ${stale.by}, but the ${plans[stale.version].for.zip !== zip ? "delivery address" : "service"} changed afterwards. That approval no longer covers this order.`;
+      if (stale) finding = `Plan version ${stale.version} was approved by ${stale.by}, but the ${voided[stale.version] || (plans[stale.version].for.zip !== zip ? "delivery address" : "service")} changed afterwards. That approval no longer covers this order, even if the change is undone: a new plan version needs a new approval.`;
       else if (current) finding = `Plan version ${current.version} was sent; no written approval of it yet.`;
       else finding = reply ? `The message says "${bare(reply.quote)}". No plan with crew, scope, price and timing has been confirmed yet, so this is a preliminary reply, not approval.` : "No plan with crew, scope, price and timing confirmed yet.";
-      if (reply && reply.value === "final_written_yes" && !current) finding += " (The extraction model labelled it a final yes. The rule does not take its word.)";
+      if (reply && reply.value === "final_written_yes" && Object.keys(plans).length === 0) finding += " (The extraction model labelled it a final yes. The rule does not take its word.)";
       add({ id: "authorization", kind: "hold", group: "authorization", title: "Delivery plan and written approval", finding, quotes: /2 Step/.test(service) ? [Q.twoStepPrelim, Q.twoStepFinal] : [Q.feasibility, Q.confirmedBeforeBooking], setByUs: /2 Step/.test(service) ? null : "Your pages require a final written YES for the two-step plan. This test applies the same to any room service: the customer approves the confirmed plan version in writing.", owner: "Ops (send the plan, record who approved which version)" });
     } else {
       add({ id: "authorization", kind: "pass", title: "Delivery plan and written approval", finding: `Plan version ${current.version} approved by ${approved.by} (${approved.channel}, ${approved.at.slice(0, 16).replace("T", " ")}): "${approved.text}"` });
     }
   }
 
+  if (st.changedAfterRelease) {
+    add({ id: "after-release", kind: "hold", group: "afterRelease", title: "Changed after release", finding: `The order was already released to the carrier when ${st.changedAfterRelease} changed. Nothing here recalls a shipment; your team decides with the carrier and issues a new plan.`, owner: "Ops (carrier and new plan)" });
+  }
   const holds = issues.filter((i) => i.kind === "hold");
   const reviews = issues.filter((i) => i.kind === "review");
   const verdict = holds.length ? "HOLD" : reviews.length ? "REVIEW" : "PASS";
@@ -306,7 +322,7 @@ export function initialState(order, product, ctx) {
   return {
     order, product, asOf: ctx.asOf, service: null, zip: order.zip, city: order.city, state: order.state,
     geo: ctx.zips[order.zip], configuration: order.configuration || null, maker: ctx.manufacturer ? ctx.manufacturer[order.handle] || null : null,
-    facts: {}, dropped: [], messages: [], draft: null, plans: {}, approvals: {}, payments: [], freight: "not shipped", customerDelivery: "open", installation: "open", released: false,
+    facts: {}, dropped: [], messages: [], earlierMessages: [], cleared: {}, voided: {}, changedAfterRelease: null, draft: null, plans: {}, approvals: {}, payments: [], freight: "not shipped", customerDelivery: "open", installation: "open", released: false,
   };
 }
 
@@ -346,14 +362,35 @@ export function replay(order, product, events, ctx, ledger = new MemoryLedger())
         entry.effects.push(`Payment of ${money(ev.amount)} ${rec.created ? "recorded" : "already recorded, not added again"}${changed ? `; service is now ${ev.for_service}` : ""}. Holds are re-checked, never released by a payment.`);
         break;
       }
-      case "fact_entered":
-        if (ev.value === null || ev.value === undefined || ev.value === "") { delete st.facts[ev.key]; entry.effects.push(`${ev.by} cleared ${ev.key.replace(/_/g, " ")}.`); }
-        else { st.facts[ev.key] = { value: ev.value, quote: null, by: ev.by, at: ev.at }; entry.effects.push(`${ev.by}: ${ev.key.replace(/_/g, " ")} = ${ev.value}.`); }
+      case "fact_entered": {
+        const label = ev.key.replace(/_/g, " ");
+        const bad = (ev.key === "stairs_count" && ev.value != null && ev.value !== "" && !(Number.isInteger(ev.value) && ev.value >= 0))
+          || (ev.key === "narrowest_door_in" && ev.value != null && ev.value !== "" && !(typeof ev.value === "number" && ev.value > 0 && ev.value < 200));
+        if (bad) { entry.effects.push(`${ev.by}: ${label} = ${ev.value} not accepted (not a valid value); previous value kept.`); break; }
+        if (st.released) st.changedAfterRelease = label;
+        if (ev.value === null || ev.value === undefined || ev.value === "") { delete st.facts[ev.key]; st.cleared[ev.key] = ev.by; entry.effects.push(`${ev.by} cleared ${label}.`); }
+        else { st.facts[ev.key] = { value: ev.value, quote: null, by: ev.by, at: ev.at }; delete st.cleared[ev.key]; entry.effects.push(`${ev.by}: ${label} = ${ev.value}.`); }
         break;
+      }
       case "plan_issued": st.plans[ev.version] = { ...ev }; entry.effects.push(`Plan version ${ev.version} sent to the customer.`); break;
       case "plan_approved": st.approvals[ev.version] = { ...ev }; entry.effects.push(`${ev.by} approved plan version ${ev.version} in writing (${ev.channel}).`); break;
-      case "destination_changed": st.zip = ev.zip; st.city = ev.city; st.geo = ctx.zips[ev.zip] || st.geo; entry.effects.push(`Delivery address changed to ZIP ${ev.zip}.`); break;
-      case "service_changed": st.service = ev.service; entry.effects.push(`Service changed to ${ev.service}.`); break;
+      case "destination_changed": {
+        st.zip = ev.zip; st.city = ev.city; st.geo = ctx.zips[ev.zip] || st.geo;
+        // Access facts describe a place: none of them carries over to a new address.
+        for (const k of LOCATION_FACTS) delete st.facts[k];
+        st.earlierMessages.push(...st.messages);
+        st.messages = [];
+        for (const v of Object.keys(st.approvals)) st.voided[v] = st.voided[v] || "delivery address";
+        if (st.released) st.changedAfterRelease = "the delivery address";
+        entry.effects.push(`Delivery address changed to ZIP ${ev.zip}. Room, stairs, door and photos on file described the old address and were set aside.`);
+        break;
+      }
+      case "service_changed":
+        if (ev.service !== st.service) {
+          for (const v of Object.keys(st.approvals)) st.voided[v] = st.voided[v] || "service";
+          if (st.released) st.changedAfterRelease = "the service";
+        }
+        st.service = ev.service; entry.effects.push(`Service changed to ${ev.service}.`); break;
       case "release_requested": {
         const r = evaluate(st);
         if (r.verdict !== "PASS") { entry.effects.push(`Release refused: ${r.label}.`); entry.refused = true; break; }
@@ -372,7 +409,7 @@ export function replay(order, product, events, ctx, ledger = new MemoryLedger())
       default: entry.effects.push(`Unknown event type ${ev.type}; ignored.`);
     }
     result = evaluate(st);
-    if (!st.released) {
+    {
       // One draft per order, updated in place when the questions change; never a second message for the same state.
       const draft = customerDraft(order, result);
       const prevKey = st.draft ? st.draft.key : null;

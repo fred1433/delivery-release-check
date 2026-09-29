@@ -55,8 +55,9 @@ function renderWalk(o) {
       ${next ? `<button type="button" class="act" data-act="step">${["", "Send it again", "Add 36 in", "Issue and approve", "Release and deliver"][w.step]}</button>` : done ? `<span class="w-done">Done</span>` : ""}
     </li>`;
   }).join("");
-  const variant = state.step === 3
-    ? `<label class="variant"><input type="checkbox" data-act="variant"${state.variant ? " checked" : ""}> ${esc(o.variant.label)}</label>` : "";
+  const variant = state.step === 3 && !state.variant
+    ? `<button type="button" class="variant" data-act="variant">Or instead: ${esc(o.variant.label.charAt(0).toLowerCase() + o.variant.label.slice(1))}</button>`
+    : state.variant ? `<p class="w-note">Address changed after approval. Step 4 waits for a new plan; start the order over to try it.</p>` : "";
   const change = state.lastChange ? `<p class="w-change">${state.lastChange}</p>` : `<p class="w-change quiet">Four things happen to this order. Run them in order and watch what changes on the ticket, and what does not.</p>`;
   el.innerHTML = `<ol class="w-steps">${steps}</ol>${variant}${change}${state.step > 0 || state.variant ? `<button type="button" class="reset" data-act="restart">Start the order over</button>` : ""}`;
 }
@@ -68,15 +69,22 @@ function describeChange(before, after) {
   const last = after.timeline.at(-1);
   const name = (id, r) => (r.result.issues.find((i) => i.id === id) || {}).title || id;
   const parts = [];
-  if (last.duplicate) parts.push(`Same webhook delivered again: ignored. Payments recorded: ${after.state.payments.length}.`);
+  const fresh = after.timeline.length > before.timeline.length;
+  if (fresh && last.duplicate) parts.push(`Same webhook delivered again: ignored. Payments recorded: ${after.state.payments.length}.`);
+  const refused = fresh && last.effects.find((x) => x.includes("not accepted"));
+  if (refused) parts.push(refused.charAt(0).toUpperCase() + refused.slice(1));
   if (gone.length) parts.push(`Resolved: ${gone.map((g) => name(g, before)).join(", ")}.`);
-  if (added.length) parts.push(`New: ${added.map((g) => { const i = after.result.issues.find((x) => x.id === g); return `${i.title}. ${i.finding}`; }).join(" ")}`);
+  const addedIssues = added.map((g) => after.result.issues.find((x) => x.id === g));
+  const blank = addedIssues.filter((i) => i.finding === "Not on file.");
+  const full = addedIssues.filter((i) => i.finding !== "Not on file.");
+  if (blank.length) parts.push(`Now missing: ${blank.map((i) => i.title.toLowerCase()).join(", ")}.`);
+  if (full.length) parts.push(`New: ${full.map((i) => `${i.title}. ${i.finding}`).join(" ")}`);
   const rel = after.timeline.find((t) => t.release);
   if (rel && !before.timeline.some((t) => t.release)) parts.push(`Released by your team, naming the ${rel.release.variables.holdIds.length} holds this workflow owns.`);
   const still = [...a].filter((x) => b.has(x));
   if (still.length) parts.push(`Still open: ${still.map((g) => name(g, after)).join(", ")}.`);
   const newActions = after.timeline.flatMap((t) => t.actions).length - before.timeline.flatMap((t) => t.actions).length;
-  if (last.duplicate) parts.push(newActions ? "" : "No new draft, no new task, no release.");
+  if (fresh && last.duplicate) parts.push(newActions ? "" : "No new draft, no new task, no release.");
   if (after.state.freight === "at installer") parts.push("Freight leg done. Customer delivery and installation: still open.");
   if (!parts.length) parts.push(`Verdict: ${after.result.verdict}.`);
   return parts.filter(Boolean).join(" ");
@@ -116,20 +124,20 @@ function markMessage(text, facts, id) {
 const FACT_ROWS = [
   { k: "narrowest_door_in", label: "Narrowest door (in)", kind: "number", room: true },
   { k: "stairs_count", label: "Steps, street to room", kind: "number", room: true },
-  { k: "path_photos", label: "Path photos", kind: "select", opts: [["", "Not on file"], ["promised", "Promised"], ["sent", "Received"]], room: true },
+  { k: "path_photos", label: "Path photos", kind: "select", opts: [["", "Not on file"], ["promised", "Promised"], ["sent", "Customer says sent"]], room: true },
   { k: "driveway_surface", label: "Driveway", kind: "select", opts: [["", "Not stated"], ["paved", "Paved"], ["gravel", "Gravel"], ["dirt", "Dirt"], ["grass", "Grass"], ["mixed_soft", "Soft when wet"]], garage: true },
   { k: "ledge_or_step_at_garage", label: "Lip at garage door", kind: "select", opts: [["", "Not stated"], ["false", "None"], ["true", "Yes"]], garage: true },
 ];
 
-function factRow(row, facts) {
+function factRow(row, facts, locked) {
   const f = facts[row.k];
   const val = f ? String(f.value) : "";
   const control = row.kind === "select"
-    ? `<select data-fact="${row.k}" aria-label="${esc(row.label)}">${row.opts.map(([v, l]) => `<option value="${v}"${val === v ? " selected" : ""}>${l}</option>`).join("")}</select>`
-    : `<input data-fact="${row.k}" type="number" min="0" step="1" inputmode="numeric" value="${esc(val)}" placeholder="Not on file" aria-label="${esc(row.label)}">`;
+    ? `<select data-fact="${row.k}" aria-label="${esc(row.label)}"${locked ? " disabled" : ""}>${row.opts.map(([v, l]) => `<option value="${v}"${val === v ? " selected" : ""}>${l}</option>`).join("")}</select>`
+    : `<input data-fact="${row.k}" type="number" min="0" step="1" inputmode="numeric" value="${esc(val)}" placeholder="Not on file" aria-label="${esc(row.label)}"${locked ? " disabled" : ""}>`;
   const origin = !f ? `<span class="origin none">Not on file</span>`
     : f.by === "message" ? `<span class="origin">From the message: <q>${esc(f.quote)}</q></span>`
-    : `<span class="origin by">${esc(f.by)}</span>`;
+    : `<span class="origin by">${f.by === "you, on this page" ? "Entered by you on this page" : esc(f.by)}</span>`;
   return `<div class="fact"><label class="flabel">${row.label}</label>${control}${origin}</div>`;
 }
 
@@ -173,16 +181,17 @@ function renderTicket() {
     <div class="t-grid">
       <div class="box wide"><span class="blabel">Machine</span><a class="entry" href="${product.url}" target="_blank" rel="noopener">${esc(shortName(product.title))}</a><span class="sub">${condOf(product.title)}, ${money(product.price)}. Ships ${esc(product.ships_as.replace(/ \(.*\)$/, "").toLowerCase())}. ${d.length ?? "?"} × ${d.width ?? "?"} × ${d.height ?? "?"} in.${o.configuration ? ` Configuration: ${esc(o.configuration)}.` : ""}</span></div>
       <div class="box wide service"><span class="blabel">Service on the order</span>
-        <select data-fact="service" aria-label="Service on the order">${product.delivery_options.map((x) => `<option value="${esc(x.name)}"${x.name === st.service ? " selected" : ""}>${esc(x.name)}${x.price ? ", " + money(x.price) : ", included"}</option>`).join("")}</select>
+        <select data-fact="service" aria-label="Service on the order"${st.released ? " disabled" : ""}>${product.delivery_options.map((x) => `<option value="${esc(x.name)}"${x.name === st.service ? " selected" : ""}>${esc(x.name)}${x.price ? ", " + money(x.price) : ", included"}</option>`).join("")}</select>
         <span class="sub">Services and prices exactly as this product page lists them</span></div>
       <div class="box"><span class="blabel">Payments recorded</span><span class="entry">${st.payments.length ? st.payments.map((p) => money(p.amount)).join(" + ") : "Order total only"}</span><span class="sub">${st.payments.length ? "for " + esc(st.payments[0].for) : "no upgrade payment"}</span></div>
       <div class="box"><span class="blabel">Freight</span><span class="entry">${st.released ? (st.freight === "at installer" ? "At the installer" : "Released") : "Not released"}</span><span class="sub">${st.released ? "released by your team, naming its holds" : "nothing leaves before a PASS"}</span></div>
       <div class="box"><span class="blabel">Customer delivery and installation</span><span class="entry">${st.customerDelivery === "delivered" ? "Delivered" : "Open"}</span><span class="sub">${st.installation === "installed" ? "installed" : "not installed"}</span></div>
     </div>
 
+    ${st.earlierMessages.map((m) => `<div class="msg-box earlier"><span class="blabel">Customer message, ${m.at.slice(5, 10).replace("-", "/")} <em>(fictional; describes the earlier address, not used for this one)</em></span><p class="msg-text">${esc(scenarios.messages[m.message])}</p></div>`).join("")}
     ${st.messages.map((m) => `<div class="msg-box"><span class="blabel">Customer message, ${m.at.slice(5, 10).replace("-", "/")} <em>(fictional)</em></span><p class="msg-text">${markMessage(scenarios.messages[m.message], st.facts, m.message)}</p></div>`).join("")}
 
-    ${rows.length ? `<div class="facts"><div class="facts-head"><span class="blabel">Facts on file</span><span class="hint">Change one; the ticket recalculates</span></div><div class="fact-grid">${rows.map((row) => factRow(row, st.facts)).join("")}</div></div>` : ""}
+    ${rows.length ? `<div class="facts"><div class="facts-head"><span class="blabel">Facts on file</span><span class="hint">${st.released ? "Released: changes now go through your carrier and a new plan" : "Change one; the ticket recalculates"}</span></div><div class="fact-grid">${rows.map((row) => factRow(row, st.facts, st.released)).join("")}</div></div>` : ""}
 
     <ol class="issues">${main.map((i) => issueRow(i, product)).join("")}</ol>
     ${cleared.length ? `<div class="cleared"><span class="blabel">Looked like a problem, cleared by your own pages</span><ol class="issues">${cleared.map((i) => issueRow(i, product)).join("")}</ol></div>` : ""}
@@ -218,7 +227,7 @@ document.getElementById("stubs").addEventListener("click", (e) => {
 
 document.getElementById("walk").addEventListener("click", (e) => {
   const b = e.target.closest("[data-act]");
-  if (!b || b.tagName === "INPUT") return;
+  if (!b) return;
   const o = featured.find((x) => x.id === state.current);
   if (b.dataset.act === "step") {
     const before = run(o);
@@ -226,14 +235,11 @@ document.getElementById("walk").addEventListener("click", (e) => {
     state.lastChange = esc(describeChange(before, run(o)));
   }
   if (b.dataset.act === "restart") { state.step = 0; state.variant = false; state.edits[o.id] = []; state.lastChange = null; }
-  render();
-});
-document.getElementById("walk").addEventListener("change", (e) => {
-  if (e.target.dataset.act !== "variant") return;
-  const o = featured.find((x) => x.id === state.current);
-  const before = run(o);
-  state.variant = e.target.checked;
-  state.lastChange = esc(describeChange(before, run(o)));
+  if (b.dataset.act === "variant") {
+    const before = run(o);
+    state.variant = true;
+    state.lastChange = esc(describeChange(before, run(o)));
+  }
   render();
 });
 
@@ -246,13 +252,19 @@ document.getElementById("ticket").addEventListener("change", (e) => {
   const at = "2026-09-29T23:" + String(10 + (editSeq++ % 49)).padStart(2, "0") + ":00-06:00";
   let v = e.target.value;
   if (k === "service") list.push({ type: "service_changed", id: `edit-${editSeq}`, at, service: v });
-  else {
+  else if (v === "" && list.some((x) => x.type === "fact_entered" && x.key === k)) {
+    // Emptying a value you entered takes your entry back; what the message said comes back with it.
+    state.edits[o.id] = list.filter((x) => !(x.type === "fact_entered" && x.key === k));
+    state.lastChange = "Your entry was taken back; what the message said applies again.";
+    render();
+    return;
+  } else {
     if (e.target.type === "number") v = v === "" ? null : Number(v);
     if (k === "ledge_or_step_at_garage") v = v === "" ? null : v === "true";
     if (v === "") v = null;
-    list.push({ type: "fact_entered", id: `edit-${editSeq}`, at, key: k, value: v, by: "Entered by you on this page" });
+    list.push({ type: "fact_entered", id: `edit-${editSeq}`, at, key: k, value: v, by: "you, on this page" });
   }
-  const before = replay(o, productOf(o), eventsFor(o).slice(0, -1), ctx);
+  const before = replay(o, productOf(o), eventsFor(o).filter((x) => x.id !== `edit-${editSeq}`), ctx);
   state.lastChange = o.walkthrough ? esc(describeChange(before, run(o))) : null;
   render();
 });

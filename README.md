@@ -43,12 +43,14 @@ Source: pages read on 2026-09-29. Status for every rule: derived from public pag
 | Access facts before shipping: room, narrowest door, path photos, step count | Product page, Shipping Information | Room of choice, any room, garage installation, two-step | HOLD per missing fact | rules, replay |
 | Steps against service paid (more than 3 on ground level) | Product page | Room of choice services | HOLD | rules |
 | Garage delivery path: softer dirt, grass or a ledge | Product page | Garage delivery | HOLD; gravel is cleared, not flagged | rules |
-| Delivery plan confirmed and approved in writing, per version; a later change of address or service voids it | Product page (two-step: final written YES); set by us for other room services | Room services | HOLD | replay, rules |
+| Delivery plan confirmed and approved in writing, per version; a later change of address or service voids it for good (undoing the change does not revive it) | Product page (two-step: final written YES); set by us for other room services | Room services | HOLD | replay, rules |
 | Shopify shipping weight and page weight on opposite sides of 150 lb, or manufacturer weight differs by configuration | Shipping policy, product page, manufacturer | All | REVIEW for the catalog owner; never a customer question; no value replaced | rules, sources |
-| Assembled size wider than the narrowest door | Product page dimensions | Fully assembled machines | REVIEW (feasibility), never "impossible" | rules |
+| Published size wider than the narrowest door | Product page dimensions (visible L x W x H when shown) | Fully or mostly assembled machines; boxed machines say "not compared" | REVIEW (feasibility), never "impossible" | rules, review_fixes |
 | Local delivery eligibility | Shipping Information; shipping policy's 120 miles recorded as a different condition | California within 120 miles | Info, or REVIEW when the customer expects free delivery | rules |
 | No tracking on a local order | Product page | Local California orders | Cleared (legitimate path) | rules |
 | Requested date earlier than the fastest published path | Shipping Information, product processing time | Orders with a date | REVIEW | rules |
+| New delivery address: room, stairs, door and photos from the old address are set aside and asked again | Set by us | All | HOLD per missing fact | review_fixes |
+| Change after release | Set by us | Released orders | HOLD; the page locks its fields | review_fixes |
 | Release only with explicit, owned hold IDs | Shopify `fulfillmentOrderReleaseHold` docs | Any release | Refused otherwise | replay |
 
 ## Runbook
@@ -64,5 +66,6 @@ Source: pages read on 2026-09-29. Status for every rule: derived from public pag
 - The order structure is illustrative: how add-ons and payments are really recorded has not been checked.
 - A monday.com item is a warning, not a lock. Blocking a real release needs the route that actually releases shipments.
 - The extraction is a frozen example: one model read each fictional message once. A quote proves where a fact came from, not that it was read right. Known miss: in order 1043 the model did not extract "The bedroom door is 30 inches wide" (test `known extraction miss`).
+- "Customer says sent" for path photos is the customer's claim; nobody has checked the photos.
 - Distances are straight lines between Census ZIP centroids; road miles are longer.
 - In n8n, the action record uses workflow static data, which is fine for the test instance; production needs a database table.

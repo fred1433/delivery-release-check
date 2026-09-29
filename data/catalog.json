@@ -16,6 +16,7 @@
         "width": 26.0,
         "height": 70.0
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 39 inch length x 26 inch width x 70.0 inch height",
       "dimensions_text": "Dimensions: 39\" L x 26\" W x 70\" H (99 cm x 66 cm x 177.8 cm)",
       "condition": "Remanufactured",
@@ -51,12 +52,13 @@
       "page_weight_lb": 824.0,
       "page_weight_quote": "Product Weight: 824 lbs",
       "dimensions_in": {
-        "length": 46.0,
-        "width": 39.0,
+        "length": 39.0,
+        "width": 46.0,
         "height": 83.0
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 46 inch length x 39 inch width x 83 inch height",
-      "dimensions_text": "Dimensions: 39\" L x 46\" W x 83\" H (99 cm x 116.8 cm x 210.8 cm)",
+      "dimensions_text": "Dimensions: 39\"L x 46\"W x 83\"H",
       "condition": "New",
       "ships_as": "New in Boxes (Assembly Options Available)",
       "processing_time": "Ships from Manufacturer's Warehouse in 2-5 Business Days + Transit Time",
@@ -105,6 +107,7 @@
         "width": 35.0,
         "height": null
       },
+      "dimensions_source": "schema.org data on the product page",
       "dimensions_quote": "Dimensions: 72 inch length x 35 inch width x  inch height",
       "dimensions_text": null,
       "condition": "Remanufactured",
@@ -154,6 +157,7 @@
         "width": 37.0,
         "height": 62.0
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 80 inch length x 37 inch width x 62.0 inch height",
       "dimensions_text": "Dimensions: 80\" L x 37\" W x 62\" H (203 x 94 x 157.5 cm)",
       "condition": "Remanufactured",
@@ -203,8 +207,9 @@
         "width": 196.0,
         "height": 94.25
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 143 inch length x 196 inch width x 94.25 inch height",
-      "dimensions_text": null,
+      "dimensions_text": "Dimensions: 143\"L x 196\"W x 94.25\"H (at Tower)",
       "condition": "New",
       "ships_as": "New in Wooden Crates (Assembly Options Available)",
       "processing_time": "Ships from our Warehouse in 3-7 Business Days + Transit Time",
@@ -252,6 +257,7 @@
         "width": 21.5,
         "height": 38.0
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 87.6 inch length x 21.5 inch width x 38 inch height",
       "dimensions_text": "Dimensions: 87.6\" L x 21.5\" W x 38\" H (223 cm x 55 cm x 97 cm)",
       "condition": "Remanufactured",
@@ -291,8 +297,9 @@
         "width": 24.0,
         "height": 60.0
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 50 inch length x 24 inch width x 60.0 inch height",
-      "dimensions_text": null,
+      "dimensions_text": "Dimensions: 50\"L x 24\"W x 60\"H (127cm x 60.96cm x 152.4cm)",
       "condition": "Remanufactured",
       "ships_as": "Fully Assembled",
       "processing_time": "Ships from our Warehouse in 2-4 Weeks + Transit Time",
@@ -330,8 +337,9 @@
         "width": 31.0,
         "height": 53.0
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 53.3 inch length x 31 inch width x 53.0 inch height",
-      "dimensions_text": null,
+      "dimensions_text": "Dimensions: 53.3\"L x 31\"W x 53\"H (1355 x 785 x 1340mm)",
       "condition": "New",
       "ships_as": "New in Boxes (Assembly Options Available)",
       "processing_time": "Ships from our Warehouse in 2-5 Business Days + Transit Time",
@@ -364,6 +372,7 @@
         "width": 28.0,
         "height": 31.0
       },
+      "dimensions_source": "schema.org data on the product page",
       "dimensions_quote": "Dimensions: 72 inch length x 28 inch width x 31 inch height",
       "dimensions_text": null,
       "condition": "New",
@@ -403,6 +412,7 @@
         "width": 35.0,
         "height": 64.0
       },
+      "dimensions_source": "schema.org data on the product page",
       "dimensions_quote": "Dimensions: 72 inch length x 35 inch width x 64 inch height",
       "dimensions_text": null,
       "condition": "Remanufactured",
@@ -452,8 +462,9 @@
         "width": 20.0,
         "height": 50.0
       },
+      "dimensions_source": "visible text on the product page",
       "dimensions_quote": "Dimensions: 43.5 inch length x 20 inch width x 50.0 inch height",
-      "dimensions_text": null,
+      "dimensions_text": "Dimensions: 43.5\"L x 20\"W x 50\"H (L:110 cm, W:51 cm, H:127 cm)",
       "condition": "New",
       "ships_as": "New in Boxes (Assembly Options Available)",
       "processing_time": "Ships from Manufacturer's Warehouse in 1-2 Weeks + Transit Time",
