@@ -31,7 +31,7 @@ export const Q = {
   installerHandoff: { src: "product", text: "Standard Installation - Shipping to Terminal or Installer (1 Step Process)" },
   notCompletion: { src: "info", text: "the transit estimate is not an installation-completion date." },
   parcelOld: { src: "policy", text: "For items under 150 lbs. Shipped via USPS, FedEx, or UPS." },
-  combinedFreight: { src: "product", text: "and the size and weight become too costly for Fedex, it will ship via freight and deliver curbside." },
+  combinedFreight: { src: "product", text: "However if this is a a part of a bigger order, like a large item and this item are part of the same order, or many smaller items, and the size and weight become too costly for Fedex, it will ship via freight and deliver curbside." },
   localNew: { src: "info", text: "Fitness Superstore offers free local delivery on eligible orders of $1,000 or more to approved delivery ZIP codes within approximately 100 miles of 94510." },
   localOldTrucks: { src: "policy", text: "Customers within 120 miles of our Benicia, CA warehouse receive delivery via our own trucks." },
   norcal: { src: "product", text: "We deliver on our own vehicles for Northern California. No tracking will be provided." },
