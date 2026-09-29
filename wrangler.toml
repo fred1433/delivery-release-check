@@ -2,6 +2,7 @@
 name = "fitness-delivery-check"
 main = "site/worker.js"
 compatibility_date = "2026-09-01"
+account_id = "4e079f3de44bde5cb2ea41dc8db3c926"
 workers_dev = false
 routes = [
   { pattern = "theaipipe.com/fitness-delivery-check*", zone_name = "theaipipe.com" }
