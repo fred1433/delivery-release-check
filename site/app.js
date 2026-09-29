@@ -55,7 +55,7 @@ function describeChange(before, after) {
   const gone = [...b].filter((x) => !a.has(x));
   const added = [...a].filter((x) => !b.has(x));
   const still = [...a].filter((x) => b.has(x));
-  if (gone.length) parts.push(`Resolved: ${gone.map((g) => title(g, before).toLowerCase()).join(", ")}.`);
+  if (gone.length) parts.push(`Resolved: ${gone.map((g) => title(g, before).toLowerCase().replace(/ (missing|not reviewed|unknown|stale|to confirm)$/, "")).join(", ")}.`);
   if (added.length) parts.push(`New: ${added.map((g) => title(g, after).toLowerCase()).join(", ")}.`);
   if (newEntries.some((t) => t.duplicate)) parts.push(still.length === 1 ? "The hold remains." : still.length === 2 ? "Both holds remain." : `All ${still.length} holds remain.`);
   else if (still.length && (gone.length || added.length)) parts.push(`Still open: ${still.map((g) => title(g, after).toLowerCase()).join(", ")}.`);
