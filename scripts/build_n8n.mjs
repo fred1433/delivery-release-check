@@ -79,9 +79,8 @@ export function workflow() {
     id: "DrcDemoWf0000001",
     name: "Delivery release check (simulated release decision)",
     nodes: [
-      { parameters: { httpMethod: "POST", path: "delivery-release-check", responseMode: "responseNode", options: {} }, id: "a1f0c0de-0001-4000-8000-000000000001", name: "Order event", type: "n8n-nodes-base.webhook", typeVersion: 2, position: [0, 0], webhookId: "5b0c9f5e-8d7c-4f6e-9a51-6f7d0d2a1c01" },
+      { parameters: { httpMethod: "POST", path: "delivery-release-check", responseMode: "lastNode", responseData: "firstEntryJson", options: {} }, id: "a1f0c0de-0001-4000-8000-000000000001", name: "Order event", type: "n8n-nodes-base.webhook", typeVersion: 2, position: [0, 0], webhookId: "5b0c9f5e-8d7c-4f6e-9a51-6f7d0d2a1c01" },
       { parameters: { jsCode: code }, id: "a1f0c0de-0001-4000-8000-000000000002", name: "Decide", type: "n8n-nodes-base.code", typeVersion: 2, position: [240, 0] },
-      { parameters: { respondWith: "firstIncomingItem", options: {} }, id: "a1f0c0de-0001-4000-8000-000000000003", name: "Return decision", type: "n8n-nodes-base.respondToWebhook", typeVersion: 1.1, position: [480, 0] },
       { parameters: { conditions: { options: { caseSensitive: true, leftValue: "", typeValidation: "strict" }, conditions: [{ id: "c0nd-0001", leftValue: "={{ $json.release_decision }}", rightValue: "CONTINUE", operator: { type: "string", operation: "equals" } }], combinator: "and" }, options: {} }, id: "a1f0c0de-0001-4000-8000-000000000004", name: "Explicit PASS?", type: "n8n-nodes-base.if", typeVersion: 2, position: [720, 0] },
       { parameters: {}, id: "a1f0c0de-0001-4000-8000-000000000005", name: "Checklist passed (release stays with your team)", type: "n8n-nodes-base.noOp", typeVersion: 1, position: [960, -120] },
       { parameters: { conditions: { options: { caseSensitive: true, leftValue: "", typeValidation: "strict" }, conditions: [{ id: "c0nd-0002", leftValue: "={{ $json.has_new_actions }}", rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } }], combinator: "and" }, options: {} }, id: "a1f0c0de-0001-4000-8000-000000000007", name: "New actions?", type: "n8n-nodes-base.if", typeVersion: 2, position: [960, 120] },
@@ -89,8 +88,9 @@ export function workflow() {
     ],
     connections: {
       "Order event": { main: [[{ node: "Decide", type: "main", index: 0 }]] },
-      Decide: { main: [[{ node: "Return decision", type: "main", index: 0 }]] },
-      "Return decision": { main: [[{ node: "Explicit PASS?", type: "main", index: 0 }]] },
+      // The webhook answers when the last node finishes, so the order's stored events are saved before the next
+      // event is answered (answering earlier let back-to-back events race on n8n's workflow static data).
+      Decide: { main: [[{ node: "Explicit PASS?", type: "main", index: 0 }]] },
       "Explicit PASS?": { main: [[{ node: "Checklist passed (release stays with your team)", type: "main", index: 0 }], [{ node: "New actions?", type: "main", index: 0 }]] },
       "New actions?": { main: [[{ node: "monday.com item (example only, disabled)", type: "main", index: 0 }], []] },
     },

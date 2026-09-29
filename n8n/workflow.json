@@ -6,7 +6,8 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "delivery-release-check",
-        "responseMode": "responseNode",
+        "responseMode": "lastNode",
+        "responseData": "firstEntryJson",
         "options": {}
       },
       "id": "a1f0c0de-0001-4000-8000-000000000001",
@@ -29,20 +30,6 @@
       "typeVersion": 2,
       "position": [
         240,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "respondWith": "firstIncomingItem",
-        "options": {}
-      },
-      "id": "a1f0c0de-0001-4000-8000-000000000003",
-      "name": "Return decision",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.1,
-      "position": [
-        480,
         0
       ]
     },
@@ -171,17 +158,6 @@
       ]
     },
     "Decide": {
-      "main": [
-        [
-          {
-            "node": "Return decision",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Return decision": {
       "main": [
         [
           {

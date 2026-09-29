@@ -72,6 +72,10 @@ A checklist PASS is not a release: the n8n response carries `checklist` and, sep
 - Credentials: none in this repository. The monday.com node is example only: keep external writes disabled until event validation, persistent state and action execution are connected and tested together. It is reached only when an event produces new actions.
 - Rollback: the workflow writes nothing outside n8n while the monday.com node is disabled. Deactivating the workflow removes it from the order path.
 
+## Known n8n limit found on the last live run
+
+Workflow static data is saved when an execution ends. When the webhook answered from a node in the middle of the workflow, two events for the same order sent back to back could race: the second one was replayed without the first. The workflow now answers when the last node finishes. That change has not been replayed on a clean n8n yet (the Docker VM was stopped at the time); `n8n/test-run.json` is the previous clean run. Production needs a database with a per-order lock, not static data.
+
 ## What this does not prove
 
 - It is not connected to a store. Events are normalized test events, not native Shopify payloads; the Shopify adapter (HMAC on the raw body, `X-Shopify-Webhook-Id` and `X-Shopify-Event-Id`) is not built.

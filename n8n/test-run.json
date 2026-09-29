@@ -1,16 +1,16 @@
 {
   "n8n_version": "2.41.3",
-  "ran_at": "2026-09-29T14:26:41.824Z",
+  "ran_at": "2026-09-29T14:17:30.568Z",
   "image": "docker.n8n.io/n8nio/n8n:latest",
   "execution_log": {
     "node finished: Order event": 19,
     "node finished: Decide": 19,
     "node finished: Return decision": 19,
     "node finished: Explicit PASS?": 19,
-    "node finished: Checklist passed (release stays with your team)": 3,
+    "node finished: Checklist passed (release stays with your team)": 5,
     "n8n.workflow.success": 19,
-    "node finished: New actions?": 16,
-    "node finished: monday.com item (example only, disabled)": 5
+    "node finished: New actions?": 14,
+    "node finished: monday.com item (example only, disabled)": 4
   },
   "calls": [
     {
@@ -274,12 +274,11 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 6,
+        "events_seen": 7,
         "duplicate": false,
         "verdict": "HOLD",
-        "label": "HOLD: access evidence incomplete",
+        "label": "HOLD: delivery plan not approved",
         "open": [
-          "access:path_photos",
           "authorization"
         ],
         "new_actions": [],
@@ -314,13 +313,11 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 7,
+        "events_seen": 8,
         "duplicate": false,
-        "verdict": "HOLD",
-        "label": "HOLD: access evidence incomplete",
-        "open": [
-          "access:path_photos"
-        ],
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
         "new_actions": [],
         "release": null,
         "refused": false,
@@ -330,10 +327,10 @@
           "installation": "open",
           "released": false
         },
-        "checklist": "HOLD",
+        "checklist": "PASS",
         "release_authorized": false,
         "has_new_actions": false,
-        "release_decision": "STOP"
+        "release_decision": "CONTINUE"
       }
     },
     {
@@ -351,26 +348,33 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 8,
+        "events_seen": 9,
         "duplicate": false,
-        "verdict": "HOLD",
-        "label": "HOLD: access evidence incomplete",
-        "open": [
-          "access:path_photos"
-        ],
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
         "new_actions": [],
-        "release": null,
-        "refused": true,
+        "release": {
+          "query": "mutation ($id: ID!, $holdIds: [ID!]) { fulfillmentOrderReleaseHold(id: $id, holdIds: $holdIds) { fulfillmentOrder { id status } userErrors { field message } } }",
+          "variables": {
+            "id": "gid://shopify/FulfillmentOrder/demo-2050",
+            "holdIds": [
+              "gid://shopify/FulfillmentHold/demo-access",
+              "gid://shopify/FulfillmentHold/demo-plan"
+            ]
+          }
+        },
+        "refused": false,
         "status": {
           "freight": "not shipped",
           "customerDelivery": "open",
           "installation": "open",
-          "released": false
+          "released": true
         },
-        "checklist": "HOLD",
-        "release_authorized": false,
+        "checklist": "PASS",
+        "release_authorized": true,
         "has_new_actions": false,
-        "release_decision": "STOP"
+        "release_decision": "CONTINUE"
       }
     },
     {
@@ -390,32 +394,24 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 9,
+        "events_seen": 10,
         "duplicate": false,
-        "verdict": "HOLD",
-        "label": "HOLD: access evidence incomplete",
-        "open": [
-          "access:path_photos",
-          "carrier"
-        ],
-        "new_actions": [
-          {
-            "kind": "ops-item",
-            "title": "Carrier update"
-          }
-        ],
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [],
         "release": null,
         "refused": false,
         "status": {
-          "freight": "not shipped",
+          "freight": "at installer",
           "customerDelivery": "open",
           "installation": "open",
-          "released": false
+          "released": true
         },
-        "checklist": "HOLD",
+        "checklist": "PASS",
         "release_authorized": false,
-        "has_new_actions": true,
-        "release_decision": "STOP"
+        "has_new_actions": false,
+        "release_decision": "NO_ACTION"
       }
     },
     {
@@ -642,24 +638,21 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 10,
+        "events_seen": 11,
         "duplicate": true,
-        "verdict": "HOLD",
-        "label": "HOLD: access evidence incomplete",
-        "open": [
-          "access:path_photos",
-          "carrier"
-        ],
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
         "new_actions": [],
         "release": null,
         "refused": false,
         "status": {
-          "freight": "not shipped",
+          "freight": "at installer",
           "customerDelivery": "open",
           "installation": "open",
-          "released": false
+          "released": true
         },
-        "checklist": "HOLD",
+        "checklist": "PASS",
         "release_authorized": false,
         "has_new_actions": false,
         "release_decision": "STOP"
