@@ -1,0 +1,15 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+export const json = (p) => JSON.parse(fs.readFileSync(path.join(root, p), "utf8"));
+export const text = (p) => fs.readFileSync(path.join(root, p), "utf8");
+export const catalog = json("data/catalog.json");
+export const scenarios = json("data/scenarios.json");
+export const extractions = json("data/extractions.json").messages;
+export const zips = json("data/zips.json").zips;
+export const manufacturer = json("data/manufacturer.json");
+export const ctx = { asOf: scenarios.as_of, zips, texts: scenarios.messages, extractions, manufacturer };
+export const product = (handle) => catalog.products.find((p) => p.handle === handle);
+export const order = (id) => scenarios.orders.find((o) => o.id === id);
+export const allEvents = (o) => [...o.events, ...(o.walkthrough || []).flatMap((w) => w.events)];

@@ -1,0 +1,522 @@
+{
+  "n8n_version": "2.41.3",
+  "ran_at": "2026-09-29T13:39:42.725Z",
+  "image": "docker.n8n.io/n8nio/n8n:latest",
+  "execution_log": {
+    "node finished: Order event": 15,
+    "node finished: Decide": 15,
+    "node finished: Return decision": 15,
+    "node finished: Explicit PASS?": 15,
+    "node finished: Simulated handoff (your team releases)": 5,
+    "n8n.workflow.success": 15,
+    "node finished: monday.com item (disabled until a board and credential are set)": 10
+  },
+  "calls": [
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-26T10:04:00-06:00",
+          "webhook_id": "wh-6c1f0a",
+          "service": "Curbside Delivery Only"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 1,
+        "duplicate": false,
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "CONTINUE"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T09:12:00-06:00",
+          "message": "m-2050-1"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 2,
+        "duplicate": false,
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "CONTINUE"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "payment_received",
+          "id": "e3",
+          "at": "2026-09-28T09:20:00-06:00",
+          "webhook_id": "wh-6c1f0b",
+          "event_id": "ev-88121",
+          "amount": 699,
+          "for_service": "Room of Choice - Stair Carry (4+ Steps)"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 3,
+        "duplicate": false,
+        "verdict": "HOLD",
+        "label": "HOLD: access evidence incomplete",
+        "open": [
+          "access:narrowest_door_in",
+          "authorization"
+        ],
+        "new_actions": [
+          {
+            "kind": "draft",
+            "title": null
+          },
+          {
+            "kind": "ops-item",
+            "title": "Delivery plan and written approval"
+          }
+        ],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "payment_received",
+          "id": "e3r",
+          "at": "2026-09-28T09:20:41-06:00",
+          "webhook_id": "wh-6c1f0b",
+          "event_id": "ev-88121",
+          "amount": 699,
+          "for_service": "Room of Choice - Stair Carry (4+ Steps)"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 4,
+        "duplicate": true,
+        "verdict": "HOLD",
+        "label": "HOLD: access evidence incomplete",
+        "open": [
+          "access:narrowest_door_in",
+          "authorization"
+        ],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": null,
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "fact_entered",
+          "id": "e4",
+          "at": "2026-09-29T08:40:00-06:00",
+          "key": "narrowest_door_in",
+          "value": 36,
+          "by": "Ops, from the customer's reply email"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 5,
+        "duplicate": false,
+        "verdict": "HOLD",
+        "label": "HOLD: delivery plan not approved",
+        "open": [
+          "authorization"
+        ],
+        "new_actions": [
+          {
+            "kind": "draft-withdrawn",
+            "title": null
+          }
+        ],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "plan_issued",
+          "id": "e5",
+          "at": "2026-09-29T10:00:00-06:00",
+          "version": 1,
+          "summary": "Three-person crew, stair carry of 22 steps with one landing, unpacking, placement in the clinic, packaging removed. Price already paid: $699. Window: October 20 to 22.",
+          "for": {
+            "service": "Room of Choice - Stair Carry (4+ Steps)",
+            "zip": "80202"
+          }
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 6,
+        "duplicate": false,
+        "verdict": "HOLD",
+        "label": "HOLD: delivery plan not approved",
+        "open": [
+          "authorization"
+        ],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "plan_approved",
+          "id": "e6",
+          "at": "2026-09-29T11:15:00-06:00",
+          "version": 1,
+          "by": "Sam R.",
+          "channel": "email",
+          "text": "Approved, plan version 1 as written."
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 7,
+        "duplicate": false,
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "CONTINUE"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "release_requested",
+          "id": "e7",
+          "at": "2026-09-30T08:00:00-06:00",
+          "by": "Ops",
+          "hold_ids": "owned"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 8,
+        "duplicate": false,
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [],
+        "release": {
+          "query": "mutation ($id: ID!, $holdIds: [ID!]) { fulfillmentOrderReleaseHold(id: $id, holdIds: $holdIds) { fulfillmentOrder { id status } userErrors { field message } } }",
+          "variables": {
+            "id": "gid://shopify/FulfillmentOrder/demo-2050",
+            "holdIds": [
+              "gid://shopify/FulfillmentHold/demo-access",
+              "gid://shopify/FulfillmentHold/demo-plan"
+            ]
+          }
+        },
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": true
+        },
+        "release_decision": "CONTINUE"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "carrier_update",
+          "id": "e8",
+          "at": "2026-10-16T14:30:00-06:00",
+          "webhook_id": "wh-6c1f0e",
+          "status": "delivered",
+          "location": "installer",
+          "label": "Delivered to installer warehouse, Commerce City, CO"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 9,
+        "duplicate": false,
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "at installer",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": true
+        },
+        "release_decision": "NO_ACTION"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2051",
+        "event": {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T13:40:00-07:00",
+          "webhook_id": "wh-71aa01",
+          "service": "Curbside Delivery Only"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2051",
+        "events_seen": 1,
+        "duplicate": false,
+        "verdict": "REVIEW",
+        "label": "REVIEW: product configuration unresolved",
+        "open": [
+          "config:weight"
+        ],
+        "new_actions": [
+          {
+            "kind": "ops-item",
+            "title": "Which weight belongs to this configuration"
+          }
+        ],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2051",
+        "event": {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T13:41:00-07:00",
+          "message": "m-2051-1"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2051",
+        "events_seen": 2,
+        "duplicate": false,
+        "verdict": "REVIEW",
+        "label": "REVIEW: product configuration unresolved",
+        "open": [
+          "config:weight"
+        ],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2052",
+        "event": {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-27T16:20:00-07:00",
+          "webhook_id": "wh-72bb01",
+          "service": "Garage Delivery - NO Unpacking (Left in Crate)"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2052",
+        "events_seen": 1,
+        "duplicate": false,
+        "verdict": "HOLD",
+        "label": "HOLD: access evidence incomplete",
+        "open": [
+          "access:garage"
+        ],
+        "new_actions": [
+          {
+            "kind": "draft",
+            "title": null
+          }
+        ],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2052",
+        "event": {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-27T16:21:00-07:00",
+          "message": "m-2052-1"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2052",
+        "events_seen": 2,
+        "duplicate": false,
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [
+          {
+            "kind": "draft-withdrawn",
+            "title": null
+          }
+        ],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "release_decision": "CONTINUE"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "payment_received",
+          "at": "2026-09-30T09:00:00-06:00"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": false,
+        "release_decision": "STOP",
+        "reason": "event needs type, id and at"
+      }
+    },
+    {
+      "request": {
+        "order_id": "9999",
+        "event": {
+          "type": "order_created",
+          "id": "x",
+          "at": "2026-09-30T09:00:00-06:00"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": false,
+        "release_decision": "STOP",
+        "reason": "unknown order_id"
+      }
+    }
+  ]
+}

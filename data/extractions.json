@@ -1,0 +1,453 @@
+{
+ "extracted_on": "2026-09-29",
+ "prompt": "prompts/extract_facts.md",
+ "how": "claude -p on the Claude Code subscription, once per message, at build time. The page never calls a model.",
+ "messages": {
+  "m-2050-1": {
+   "message_sha256": "5c8adb524299eecc535e6a5c5d127ea91f761e1f9cf43c1bc7b4167e9c8047a3",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": {
+     "value": 22,
+     "quote": "22 steps"
+    },
+    "floor_or_stairs_described": {
+     "value": "Clinic on the second floor, freight elevator out of service until November, 22 steps with one landing",
+     "quote": "Our clinic is on the second floor and the freight elevator is out of service until November"
+    },
+    "narrowest_door_in": null,
+    "path_photos": {
+     "value": "sent",
+     "quote": "I emailed photos of the stairwell and both turns"
+    },
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": {
+     "value": "final_written_yes",
+     "quote": "The stair carry sounds good, go ahead."
+    },
+    "handling_on_site": null
+   }
+  },
+  "m-2051-1": {
+   "message_sha256": "31c73f0a8697408c91f1c9fd1cf7d94ebdd36e5a0cfe99b3093cd28be1fab0ad",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": {
+     "value": "forklift",
+     "quote": "we have a forklift"
+    }
+   }
+  },
+  "m-2052-1": {
+   "message_sha256": "0d009188c72388c31035468f94ef870a26cb4f01d8c2101e9d49d201f7d24275",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": {
+     "value": "gravel",
+     "quote": "Gravel driveway"
+    },
+    "ledge_or_step_at_garage": {
+     "value": false,
+     "quote": "no step or lip at the door"
+    },
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-1041-1": {
+   "message_sha256": "0c442fcfd3d793553e60d516fcdc871b31ba9a8cee576e4f1528f3122b629d34",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": {
+     "value": "spare bedroom on the ground floor",
+     "quote": "spare bedroom on the ground floor"
+    },
+    "stairs_count": {
+     "value": 2,
+     "quote": "Two steps up to the front door"
+    },
+    "floor_or_stairs_described": {
+     "value": "ground floor; two steps up to the front door",
+     "quote": "Two steps up to the front door"
+    },
+    "narrowest_door_in": {
+     "value": 30,
+     "quote": "30 inches"
+    },
+    "path_photos": {
+     "value": "sent",
+     "quote": "I already emailed photos of the path and the turn."
+    },
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-1043-1": {
+   "message_sha256": "6c9d741526d2d1963559be399d01b3867757cff111be3ca1b92b6e7aa22d5956",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": {
+     "value": "his bedroom upstairs",
+     "quote": "his bedroom upstairs"
+    },
+    "stairs_count": {
+     "value": 14,
+     "quote": "about 14 steps"
+    },
+    "floor_or_stairs_described": {
+     "value": "upstairs, one flight of stairs with a landing halfway",
+     "quote": "upstairs. One flight of stairs, about 14 steps, with a landing halfway"
+    },
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-1044-1": {
+   "message_sha256": "5d667ea93cfb0130529dfbc0a779ea113b63224c29cd1f5bb698c95a6cb885d1",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": {
+     "value": "garage",
+     "quote": "Leave it in the garage"
+    },
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": {
+     "value": "mixed_soft",
+     "quote": "the driveway is dirt and gravel mixed and gets soft when it rains"
+    },
+    "ledge_or_step_at_garage": {
+     "value": true,
+     "quote": "there's a small lip at the garage door"
+    },
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-1045-1": {
+   "message_sha256": "f7a205f7c66d0148f4a015859847ab9344c7de1112357b50a2510b62bc8d5e80",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": {
+     "value": "basement gym",
+     "quote": "Basement gym"
+    },
+    "stairs_count": null,
+    "floor_or_stairs_described": {
+     "value": "basement",
+     "quote": "Basement"
+    },
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-1046-1": {
+   "message_sha256": "f0f7dfe2a93cd562a605c82cc522aa881e737b1e122a9ef64246f5e40c838182",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": {
+     "value": "2026-10-10",
+     "quote": "before our studio opens on October 10"
+    },
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": {
+     "value": "customer's own crew carries it in from curbside",
+     "quote": "we'll carry it in ourselves"
+    }
+   }
+  },
+  "m-1047-1": {
+   "message_sha256": "4fbfbe31e0f000efc5bb6c3d22277b77eaa09652361edfd7a2ebf0eb349147d6",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": {
+     "value": true,
+     "quote": "I'm expecting free local delivery again."
+    },
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-1048-1": {
+   "message_sha256": "23eb4e9bb396634fc3faead34c30ab3ceb9b1438596129cebaff9afea81881ff",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-1049-1": {
+   "message_sha256": "d1c6d0f6094e2498d9b487c07297b65bc5545db5cc285ec7962c3baa12196752",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": {
+     "value": 1,
+     "quote": "one step at the entrance"
+    },
+    "floor_or_stairs_described": {
+     "value": "Ground floor condo, one step at the entrance",
+     "quote": "Ground floor condo, one step at the entrance"
+    },
+    "narrowest_door_in": {
+     "value": 32,
+     "quote": "32 inches"
+    },
+    "path_photos": {
+     "value": "promised",
+     "quote": "I'll send photos this weekend"
+    },
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": {
+     "value": "final_written_yes",
+     "quote": "Yes, go ahead with the two step thing, sounds good"
+    },
+    "handling_on_site": null
+   }
+  },
+  "m-1051-1": {
+   "message_sha256": "c07625be4d687c5e55fc2e93de6f22cb63c160310146df7085cfa4bab5628692",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": {
+     "value": "Home office on the ground floor",
+     "quote": "Home office on the ground floor"
+    },
+    "stairs_count": {
+     "value": 0,
+     "quote": "no steps from the driveway"
+    },
+    "floor_or_stairs_described": {
+     "value": "Ground floor, no steps from the driveway",
+     "quote": "Home office on the ground floor, no steps from the driveway"
+    },
+    "narrowest_door_in": {
+     "value": 34,
+     "quote": "All doors are 34 inches"
+    },
+    "path_photos": {
+     "value": "sent",
+     "quote": "I sent photos of the hallway and the one turn"
+    },
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-a-neg": {
+   "message_sha256": "5a4c883dcfd7b81a5002f4609b030493ec439bfed213d05c3a66535d8ed9a219",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": {
+     "value": "upstairs office",
+     "quote": "upstairs office"
+    },
+    "stairs_count": {
+     "value": 16,
+     "quote": "16 steps up"
+    },
+    "floor_or_stairs_described": {
+     "value": "upstairs office, 16 steps up",
+     "quote": "upstairs office, 16 steps up"
+    },
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-a-corr": {
+   "message_sha256": "9dde313b7f186566db9780672be0701bfeee1ec25cc414bfcb1be2a1f85daa1c",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": {
+     "value": 12,
+     "quote": "there are twelve"
+    },
+    "floor_or_stairs_described": {
+     "value": "twelve steps",
+     "quote": "there are twelve"
+    },
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-a-unit": {
+   "message_sha256": "ebaf99ab0053b3b43ccda806b52a17a1cfa64608349ffbe6a78f20b825e564b0",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-a-unknown": {
+   "message_sha256": "b139efb4df5bf6704d6e79a50587d4cfa904bdaa96e8d3ec332008c48bdf104d",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": {
+     "value": "maybe a few",
+     "quote": "maybe a few"
+    },
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-a-conf-1": {
+   "message_sha256": "a0b04f21f032f24395901fcf575a53070703d60af21a4e5f67a4f60448d20592",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": {
+     "value": 30,
+     "quote": "Doorway is 30 inches"
+    },
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-a-conf-2": {
+   "message_sha256": "4b60dd263ab610aa5614a22b44f11b38913bd98f81cc6edb7a1fc5906bc0d2f0",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": {
+     "value": 28,
+     "quote": "the doorway is 28 inches"
+    },
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  },
+  "m-a-prelim": {
+   "message_sha256": "6c3f344f84e02b6d299917aa41fb1041c614e85229ac9a6fdf7378a64f71efd2",
+   "model": "claude-sonnet-5-5",
+   "facts": {
+    "room_location": null,
+    "stairs_count": null,
+    "floor_or_stairs_described": null,
+    "narrowest_door_in": null,
+    "path_photos": null,
+    "driveway_surface": null,
+    "ledge_or_step_at_garage": null,
+    "need_by": null,
+    "expects_free_local_delivery": null,
+    "approval_reply": null,
+    "handling_on_site": null
+   }
+  }
+ }
+}

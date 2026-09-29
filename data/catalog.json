@@ -1,0 +1,481 @@
+{
+  "read_on": "2026-09-29",
+  "source": "https://www.fitnesssuperstore.com",
+  "products": [
+    {
+      "handle": "scifit-tc-1000-stair-stepper-remanufactured",
+      "url": "https://www.fitnesssuperstore.com/products/scifit-tc-1000-stair-stepper-remanufactured",
+      "title": "SciFit TC 1000 Stair Stepper (Remanufactured)",
+      "price": 3999.0,
+      "shopify_grams": 45359,
+      "shopify_lb": 100.0,
+      "page_weight_lb": 160.0,
+      "page_weight_quote": "Product Weight: 160 lbs (72.6 kg)",
+      "dimensions_in": {
+        "length": 39.0,
+        "width": 26.0,
+        "height": 70.0
+      },
+      "dimensions_quote": "Dimensions: 39 inch length x 26 inch width x 70.0 inch height",
+      "dimensions_text": "Dimensions: 39\" L x 26\" W x 70\" H (99 cm x 66 cm x 177.8 cm)",
+      "condition": "Remanufactured",
+      "ships_as": "Fully Assembled",
+      "processing_time": "Ships from our Warehouse in 2-4 Weeks + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Full Assembly & Installation - Any Room",
+          "price": 250.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "body-solid-sdc2000g-proclub-line-dual-cable-column-new",
+      "url": "https://www.fitnesssuperstore.com/products/body-solid-sdc2000g-proclub-line-dual-cable-column-new",
+      "title": "Body-Solid SDC2000G ProClub Line Dual Cable Column (New)",
+      "price": 2895.0,
+      "shopify_grams": 34019,
+      "shopify_lb": 75.0,
+      "page_weight_lb": 824.0,
+      "page_weight_quote": "Product Weight: 824 lbs",
+      "dimensions_in": {
+        "length": 46.0,
+        "width": 39.0,
+        "height": 83.0
+      },
+      "dimensions_quote": "Dimensions: 46 inch length x 39 inch width x 83 inch height",
+      "dimensions_text": "Dimensions: 39\" L x 46\" W x 83\" H (99 cm x 116.8 cm x 210.8 cm)",
+      "condition": "New",
+      "ships_as": "New in Boxes (Assembly Options Available)",
+      "processing_time": "Ships from Manufacturer's Warehouse in 2-5 Business Days + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Full Assembly & Installation - Any Room",
+          "price": 499.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {
+        "weight-stack": [
+          {
+            "name": "(2) 160 lb Weight Stack",
+            "price": 0.0
+          },
+          {
+            "name": "(2) 235 lb Weight Stack (SP15)",
+            "price": 275.0
+          }
+        ]
+      },
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "octane-fitness-xr6000-seated-elliptical-w-smart-screen-remanufactured",
+      "url": "https://www.fitnesssuperstore.com/products/octane-fitness-xr6000-seated-elliptical-w-smart-screen-remanufactured",
+      "title": "Octane Fitness XR6000 Seated Elliptical w/Smart Screen (Remanufactured)",
+      "price": 4999.0,
+      "shopify_grams": 68039,
+      "shopify_lb": 150.0,
+      "page_weight_lb": 320.0,
+      "page_weight_quote": "Product Weight: 320 lbs (145 kg)",
+      "dimensions_in": {
+        "length": 72.0,
+        "width": 35.0,
+        "height": null
+      },
+      "dimensions_quote": "Dimensions: 72 inch length x 35 inch width x  inch height",
+      "dimensions_text": null,
+      "condition": "Remanufactured",
+      "ships_as": "Fully Assembled",
+      "processing_time": "Ships from our Warehouse in 2-4 Weeks + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Garage Installation",
+          "price": 249.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Ground Level (0-3 Steps)",
+          "price": 349.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Stair Carry (4+ Steps)",
+          "price": 449.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "life-fitness-95t-achieve-treadmill-remanufactured",
+      "url": "https://www.fitnesssuperstore.com/products/life-fitness-95t-achieve-treadmill-remanufactured",
+      "title": "Life Fitness 95T Achieve Treadmill (Remanufactured)",
+      "price": 4299.0,
+      "shopify_grams": 102058,
+      "shopify_lb": 225.0,
+      "page_weight_lb": 442.0,
+      "page_weight_quote": "Product Weight: 442 lbs (200.5 kg)",
+      "dimensions_in": {
+        "length": 80.0,
+        "width": 37.0,
+        "height": 62.0
+      },
+      "dimensions_quote": "Dimensions: 80 inch length x 37 inch width x 62.0 inch height",
+      "dimensions_text": "Dimensions: 80\" L x 37\" W x 62\" H (203 x 94 x 157.5 cm)",
+      "condition": "Remanufactured",
+      "ships_as": "Mostly Assembled, Arms Removed (Assembly Options Available)",
+      "processing_time": "Ships from our Warehouse in 2-4 Weeks + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Garage Installation",
+          "price": 349.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Ground Level (0-3 Steps)",
+          "price": 449.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Stair Carry (4+ Steps)",
+          "price": 599.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "french-fitness-ffb-black-5-stack-multi-jungle-gym-new",
+      "url": "https://www.fitnesssuperstore.com/products/french-fitness-ffb-black-5-stack-multi-jungle-gym-new",
+      "title": "French Fitness FFB Black 5 Stack Multi Jungle Gym (New)",
+      "price": 8199.0,
+      "shopify_grams": 204117,
+      "shopify_lb": 450.0,
+      "page_weight_lb": 1951.09,
+      "page_weight_quote": "Product Weight: 1951.09 lb (885 kg)",
+      "dimensions_in": {
+        "length": 143.0,
+        "width": 196.0,
+        "height": 94.25
+      },
+      "dimensions_quote": "Dimensions: 143 inch length x 196 inch width x 94.25 inch height",
+      "dimensions_text": null,
+      "condition": "New",
+      "ships_as": "New in Wooden Crates (Assembly Options Available)",
+      "processing_time": "Ships from our Warehouse in 3-7 Business Days + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Garage Installation",
+          "price": 849.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Ground Level (0-3 Steps)",
+          "price": 999.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Stair Carry (4+ Steps)",
+          "price": 1149.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "matrix-indoor-rower-w-lcd-console-remanufactured",
+      "url": "https://www.fitnesssuperstore.com/products/matrix-indoor-rower-w-lcd-console-remanufactured",
+      "title": "Matrix Indoor Rower w/LCD Console (Remanufactured)",
+      "price": 2449.0,
+      "shopify_grams": 45359,
+      "shopify_lb": 100.0,
+      "page_weight_lb": 130.0,
+      "page_weight_quote": "Product Weight: 130 lbs (59 kg)",
+      "dimensions_in": {
+        "length": 87.6,
+        "width": 21.5,
+        "height": 38.0
+      },
+      "dimensions_quote": "Dimensions: 87.6 inch length x 21.5 inch width x 38 inch height",
+      "dimensions_text": "Dimensions: 87.6\" L x 21.5\" W x 38\" H (223 cm x 55 cm x 97 cm)",
+      "condition": "Remanufactured",
+      "ships_as": "Fully Assembled",
+      "processing_time": "Ships from our Warehouse in 2-4 Weeks + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Full Assembly & Installation - Any Room",
+          "price": 250.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "precor-c846i-upright-exercise-bike-remanufactured",
+      "url": "https://www.fitnesssuperstore.com/products/precor-c846i-upright-exercise-bike-remanufactured",
+      "title": "Precor c846i Upright Exercise Bike (Remanufactured)",
+      "price": 3399.0,
+      "shopify_grams": 45359,
+      "shopify_lb": 100.0,
+      "page_weight_lb": 130.0,
+      "page_weight_quote": "Product Weight: 130 lb (58.96 kg)",
+      "dimensions_in": {
+        "length": 50.0,
+        "width": 24.0,
+        "height": 60.0
+      },
+      "dimensions_quote": "Dimensions: 50 inch length x 24 inch width x 60.0 inch height",
+      "dimensions_text": null,
+      "condition": "Remanufactured",
+      "ships_as": "Fully Assembled",
+      "processing_time": "Ships from our Warehouse in 2-4 Weeks + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Full Assembly & Installation - Any Room",
+          "price": 250.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "french-fitness-mab30-multi-adjustable-bench-new",
+      "url": "https://www.fitnesssuperstore.com/products/french-fitness-mab30-multi-adjustable-bench-new",
+      "title": "French Fitness MAB30 Multi Adjustable Bench (New)",
+      "price": 549.0,
+      "shopify_grams": 5897,
+      "shopify_lb": 13.0,
+      "page_weight_lb": 99.2,
+      "page_weight_quote": "Product Weight: 99.2 lbs (45 kg)",
+      "dimensions_in": {
+        "length": 53.3,
+        "width": 31.0,
+        "height": 53.0
+      },
+      "dimensions_quote": "Dimensions: 53.3 inch length x 31 inch width x 53.0 inch height",
+      "dimensions_text": null,
+      "condition": "New",
+      "ships_as": "New in Boxes (Assembly Options Available)",
+      "processing_time": "Ships from our Warehouse in 2-5 Business Days + Transit Time",
+      "delivery_options": [
+        {
+          "name": "No Thanks – Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Full Assembly & Installation - Any Room",
+          "price": 299.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "body-solid-fid46-olympic-leverage-flat-incline-decline-bench-new",
+      "url": "https://www.fitnesssuperstore.com/products/body-solid-fid46-olympic-leverage-flat-incline-decline-bench-new",
+      "title": "Body-Solid FID46 Olympic Leverage Flat Incline Decline Bench (New)",
+      "price": 425.0,
+      "shopify_grams": 4990,
+      "shopify_lb": 11.0,
+      "page_weight_lb": 93.0,
+      "page_weight_quote": null,
+      "dimensions_in": {
+        "length": 72.0,
+        "width": 28.0,
+        "height": 31.0
+      },
+      "dimensions_quote": "Dimensions: 72 inch length x 28 inch width x 31 inch height",
+      "dimensions_text": null,
+      "condition": "New",
+      "ships_as": "New in Boxes (Assembly Options Available)",
+      "processing_time": "Ships from Manufacturer's Warehouse in 3-7 Business Days + Transit Time",
+      "delivery_options": [
+        {
+          "name": "No Thanks – Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Full Assembly & Installation - Any Room",
+          "price": 299.0,
+          "default": false
+        },
+        {
+          "name": "Assembly - Any Room (2 Step Process)",
+          "price": 199.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "woodway-4front-treadmill-w-quick-set-display-remanufactured",
+      "url": "https://www.fitnesssuperstore.com/products/woodway-4front-treadmill-w-quick-set-display-remanufactured",
+      "title": "Woodway 4Front Treadmill w/Quick Set Display (Remanufactured)",
+      "price": 9699.0,
+      "shopify_grams": 102058,
+      "shopify_lb": 225.0,
+      "page_weight_lb": 445.0,
+      "page_weight_quote": null,
+      "dimensions_in": {
+        "length": 72.0,
+        "width": 35.0,
+        "height": 64.0
+      },
+      "dimensions_quote": "Dimensions: 72 inch length x 35 inch width x 64 inch height",
+      "dimensions_text": null,
+      "condition": "Remanufactured",
+      "ships_as": "Mostly Assembled, Arms Removed (Assembly Options Available)",
+      "processing_time": "Ships from our Warehouse in 2-4 Weeks + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Garage Installation",
+          "price": 349.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Ground Level (0-3 Steps)",
+          "price": 499.0,
+          "default": false
+        },
+        {
+          "name": "Room of Choice - Stair Carry (4+ Steps)",
+          "price": 699.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    },
+    {
+      "handle": "schwinn-ac-sport-9-7340-wintp0-bike-new",
+      "url": "https://www.fitnesssuperstore.com/products/schwinn-ac-sport-9-7340-wintp0-bike-new",
+      "title": "Schwinn AC Sport 9-7340-WINTP0 Bike (New)",
+      "price": 2439.0,
+      "shopify_grams": 45359,
+      "shopify_lb": 100.0,
+      "page_weight_lb": 115.0,
+      "page_weight_quote": "Product Weight: 115 lb (52 KG)",
+      "dimensions_in": {
+        "length": 43.5,
+        "width": 20.0,
+        "height": 50.0
+      },
+      "dimensions_quote": "Dimensions: 43.5 inch length x 20 inch width x 50.0 inch height",
+      "dimensions_text": null,
+      "condition": "New",
+      "ships_as": "New in Boxes (Assembly Options Available)",
+      "processing_time": "Ships from Manufacturer's Warehouse in 1-2 Weeks + Transit Time",
+      "delivery_options": [
+        {
+          "name": "Curbside Delivery Only",
+          "price": 0.0,
+          "default": true
+        },
+        {
+          "name": "Garage Delivery - NO Unpacking (Left in Crate)",
+          "price": 100.0,
+          "default": false
+        },
+        {
+          "name": "Full Assembly & Installation - Any Room",
+          "price": 299.0,
+          "default": false
+        }
+      ],
+      "configuration_options": {},
+      "read_on": "2026-09-29"
+    }
+  ]
+}

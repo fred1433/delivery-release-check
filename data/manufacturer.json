@@ -1,0 +1,12 @@
+{
+  "body-solid-sdc2000g-proclub-line-dual-cable-column-new": {
+    "source": "https://bodysolid.com/pro-clubline-dual-cable-column",
+    "read_on": "2026-09-29",
+    "note": "Manufacturer specification for model SDC2000G, read by hand; values copied as published.",
+    "assembled_dimensions_in": {"width": 44.0, "depth": 46.0, "height": 82.5},
+    "weights": [
+      {"configuration": "160 lb. Multi-Stack", "matches": "(2) 160 lb Weight Stack", "assembled_lb": 674},
+      {"configuration": "235 lb. Multi-Stack", "matches": "(2) 235 lb Weight Stack (SP15)", "assembled_lb": 824.5, "gross_lb": 858.0}
+    ]
+  }
+}

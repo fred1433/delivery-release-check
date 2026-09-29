@@ -1,0 +1,9 @@
+{
+  "name": "delivery-release-check",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "build": "node scripts/build_site.mjs && node scripts/build_n8n.mjs"
+  }
+}

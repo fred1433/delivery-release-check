@@ -1,0 +1,13 @@
+# Static page only. No secrets, no bindings besides the static assets.
+name = "fitness-delivery-check"
+main = "site/worker.js"
+compatibility_date = "2026-09-01"
+workers_dev = false
+routes = [
+  { pattern = "theaipipe.com/fitness-delivery-check*", zone_name = "theaipipe.com" }
+]
+
+[assets]
+directory = "./site/dist"
+binding = "ASSETS"
+html_handling = "auto-trailing-slash"
