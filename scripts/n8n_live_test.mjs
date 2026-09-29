@@ -24,6 +24,9 @@ for (const o of sc.orders.filter((x) => x.featured)) {
   for (const ev of events) calls.push({ order_id: o.id, event: ev });
 }
 calls.push({ order_id: "2050", event: { type: "payment_received", at: "2026-09-30T09:00:00-06:00" } });
+calls.push({ order_id: "2050", event: { type: "banana", id: "b1", at: "2026-09-30T09:01:00-06:00" } });
+calls.push({ order_id: "2050", event: { type: "carrier_update", id: "c9", at: "2026-09-30T09:02:00-06:00" } });
+calls.push({ order_id: "2050", event: { type: "payment_received", id: "e3c", at: "2026-09-30T09:03:00-06:00", webhook_id: "wh-other", event_id: "ev-88121", amount: 699, for_service: "Room of Choice - Stair Carry (4+ Steps)" } });
 calls.push({ order_id: "9999", event: { type: "order_created", id: "x", at: "2026-09-30T09:00:00-06:00" } });
 
 const out = [];

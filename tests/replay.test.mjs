@@ -10,10 +10,10 @@ const steps = Object.fromEntries(o.walkthrough.map((w) => [w.step, w.events]));
 const upTo = (n) => [...o.events, ...[1, 2, 3, 4].filter((s) => s <= n).flatMap((s) => steps[s])];
 const open = (r) => r.result.issues.filter((i) => i.kind === "hold" || i.kind === "review").map((i) => i.id).sort();
 
-test("before any action: payment recorded, two separate holds, one draft", () => {
+test("before any action: payment recorded, separate holds (door, unreviewed photos, plan), one draft", () => {
   const r = replay(o, p, upTo(0), ctx);
   assert.equal(r.result.verdict, "HOLD");
-  assert.deepEqual(open(r), ["access:narrowest_door_in", "authorization"]);
+  assert.deepEqual(open(r), ["access:narrowest_door_in", "access:path_photos", "authorization"]);
   assert.equal(r.state.payments.length, 1);
   assert.equal(r.timeline.flatMap((t) => t.actions).filter((a) => a.kind === "draft").length, 1);
 });
@@ -30,8 +30,10 @@ test("1. the same payment delivered twice is recorded once, holds unchanged, no 
 });
 
 test("2. adding the door width resolves only that item", () => {
-  const r = replay(o, p, upTo(2), ctx);
-  assert.deepEqual(open(r), ["authorization"]);
+  const before = open(replay(o, p, upTo(1), ctx));
+  const after = open(replay(o, p, upTo(2), ctx));
+  assert.deepEqual(before.filter((x) => !after.includes(x)), ["access:narrowest_door_in"]);
+  assert.deepEqual(after.filter((x) => !before.includes(x)), []);
 });
 
 test("3. a written approval of the current plan version passes; changing the address afterwards voids it", () => {
@@ -40,7 +42,7 @@ test("3. a written approval of the current plan version passes; changing the add
   const moved = replay(o, p, [...upTo(3), ...o.variant.events], ctx);
   assert.equal(moved.result.verdict, "HOLD");
   const auth = moved.result.issues.find((i) => i.id === "authorization");
-  assert.match(auth.finding, /Plan version 1 was approved by Sam R\., but the delivery address changed/);
+  assert.match(auth.finding, /Plan version 1 was approved by Sam R\., but delivery address \(plan: 80202; now: 80205\)/);
 });
 
 test("changing the service after approval also voids it", () => {

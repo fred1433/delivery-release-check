@@ -1,15 +1,16 @@
 {
   "n8n_version": "2.41.3",
-  "ran_at": "2026-09-29T13:50:56.687Z",
+  "ran_at": "2026-09-29T14:17:30.568Z",
   "image": "docker.n8n.io/n8nio/n8n:latest",
   "execution_log": {
-    "node finished: Order event": 15,
-    "node finished: Decide": 15,
-    "node finished: Return decision": 15,
-    "node finished: Explicit PASS?": 15,
-    "node finished: Simulated handoff (your team releases)": 5,
-    "n8n.workflow.success": 15,
-    "node finished: monday.com item (disabled until a board and credential are set)": 10
+    "node finished: Order event": 19,
+    "node finished: Decide": 19,
+    "node finished: Return decision": 19,
+    "node finished: Explicit PASS?": 19,
+    "node finished: Checklist passed (release stays with your team)": 5,
+    "n8n.workflow.success": 19,
+    "node finished: New actions?": 14,
+    "node finished: monday.com item (example only, disabled)": 4
   },
   "calls": [
     {
@@ -41,6 +42,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "PASS",
+        "release_authorized": false,
+        "has_new_actions": false,
         "release_decision": "CONTINUE"
       }
     },
@@ -72,6 +76,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "PASS",
+        "release_authorized": false,
+        "has_new_actions": false,
         "release_decision": "CONTINUE"
       }
     },
@@ -98,12 +105,17 @@
         "label": "HOLD: access evidence incomplete",
         "open": [
           "access:narrowest_door_in",
+          "access:path_photos",
           "authorization"
         ],
         "new_actions": [
           {
             "kind": "draft",
             "title": null
+          },
+          {
+            "kind": "ops-item",
+            "title": "Path photos: customer says sent, not yet reviewed"
           },
           {
             "kind": "ops-item",
@@ -118,6 +130,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "HOLD",
+        "release_authorized": false,
+        "has_new_actions": true,
         "release_decision": "STOP"
       }
     },
@@ -144,12 +159,21 @@
         "label": "HOLD: access evidence incomplete",
         "open": [
           "access:narrowest_door_in",
+          "access:path_photos",
           "authorization"
         ],
         "new_actions": [],
         "release": null,
         "refused": false,
-        "status": null,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "checklist": "HOLD",
+        "release_authorized": false,
+        "has_new_actions": false,
         "release_decision": "STOP"
       }
     },
@@ -172,8 +196,9 @@
         "events_seen": 5,
         "duplicate": false,
         "verdict": "HOLD",
-        "label": "HOLD: delivery plan not approved",
+        "label": "HOLD: access evidence incomplete",
         "open": [
+          "access:path_photos",
           "authorization"
         ],
         "new_actions": [
@@ -190,6 +215,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "HOLD",
+        "release_authorized": false,
+        "has_new_actions": true,
         "release_decision": "STOP"
       }
     },
@@ -197,15 +225,12 @@
       "request": {
         "order_id": "2050",
         "event": {
-          "type": "plan_issued",
-          "id": "e5",
-          "at": "2026-09-29T10:00:00-06:00",
-          "version": 1,
-          "summary": "Three-person crew, stair carry of 22 steps with one landing, unpacking, placement in the clinic, packaging removed. Price already paid: $699. Window: October 20 to 22.",
-          "for": {
-            "service": "Room of Choice - Stair Carry (4+ Steps)",
-            "zip": "80202"
-          }
+          "type": "fact_entered",
+          "id": "e4b",
+          "at": "2026-09-29T09:50:00-06:00",
+          "key": "path_photos",
+          "value": "received",
+          "by": "Ops, after reviewing the stairwell photos"
         }
       },
       "status": 200,
@@ -228,6 +253,46 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "HOLD",
+        "release_authorized": false,
+        "has_new_actions": false,
+        "release_decision": "STOP"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "plan_issued",
+          "id": "e5",
+          "at": "2026-09-29T10:00:00-06:00",
+          "version": 1,
+          "summary": "Fictional plan details: three-person crew, stair carry of 22 steps with one landing, unpacking, placement in the clinic, packaging removed. Price already paid: $699. Window: October 20 to 22."
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 7,
+        "duplicate": false,
+        "verdict": "HOLD",
+        "label": "HOLD: delivery plan not approved",
+        "open": [
+          "authorization"
+        ],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "not shipped",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": false
+        },
+        "checklist": "HOLD",
+        "release_authorized": false,
+        "has_new_actions": false,
         "release_decision": "STOP"
       }
     },
@@ -248,7 +313,7 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 7,
+        "events_seen": 8,
         "duplicate": false,
         "verdict": "PASS",
         "label": "PASS: this checklist is complete; operational release remains with your team",
@@ -262,6 +327,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "PASS",
+        "release_authorized": false,
+        "has_new_actions": false,
         "release_decision": "CONTINUE"
       }
     },
@@ -280,7 +348,7 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 8,
+        "events_seen": 9,
         "duplicate": false,
         "verdict": "PASS",
         "label": "PASS: this checklist is complete; operational release remains with your team",
@@ -303,6 +371,9 @@
           "installation": "open",
           "released": true
         },
+        "checklist": "PASS",
+        "release_authorized": true,
+        "has_new_actions": false,
         "release_decision": "CONTINUE"
       }
     },
@@ -323,7 +394,7 @@
       "response": {
         "decision_valid": true,
         "order_id": "2050",
-        "events_seen": 9,
+        "events_seen": 10,
         "duplicate": false,
         "verdict": "PASS",
         "label": "PASS: this checklist is complete; operational release remains with your team",
@@ -337,6 +408,9 @@
           "installation": "open",
           "released": true
         },
+        "checklist": "PASS",
+        "release_authorized": false,
+        "has_new_actions": false,
         "release_decision": "NO_ACTION"
       }
     },
@@ -376,6 +450,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "REVIEW",
+        "release_authorized": false,
+        "has_new_actions": true,
         "release_decision": "STOP"
       }
     },
@@ -409,6 +486,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "REVIEW",
+        "release_authorized": false,
+        "has_new_actions": false,
         "release_decision": "STOP"
       }
     },
@@ -432,7 +512,8 @@
         "verdict": "HOLD",
         "label": "HOLD: access evidence incomplete",
         "open": [
-          "access:garage"
+          "access:garage-surface",
+          "access:garage-ledge"
         ],
         "new_actions": [
           {
@@ -448,6 +529,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "HOLD",
+        "release_authorized": false,
+        "has_new_actions": true,
         "release_decision": "STOP"
       }
     },
@@ -484,6 +568,9 @@
           "installation": "open",
           "released": false
         },
+        "checklist": "PASS",
+        "release_authorized": false,
+        "has_new_actions": true,
         "release_decision": "CONTINUE"
       }
     },
@@ -499,7 +586,76 @@
       "response": {
         "decision_valid": false,
         "release_decision": "STOP",
-        "reason": "event needs type, id and at"
+        "reason": "event needs id"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "banana",
+          "id": "b1",
+          "at": "2026-09-30T09:01:00-06:00"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": false,
+        "release_decision": "STOP",
+        "reason": "unsupported event type \"banana\""
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "carrier_update",
+          "id": "c9",
+          "at": "2026-09-30T09:02:00-06:00"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": false,
+        "release_decision": "STOP",
+        "reason": "carrier_update needs status"
+      }
+    },
+    {
+      "request": {
+        "order_id": "2050",
+        "event": {
+          "type": "payment_received",
+          "id": "e3c",
+          "at": "2026-09-30T09:03:00-06:00",
+          "webhook_id": "wh-other",
+          "event_id": "ev-88121",
+          "amount": 699,
+          "for_service": "Room of Choice - Stair Carry (4+ Steps)"
+        }
+      },
+      "status": 200,
+      "response": {
+        "decision_valid": true,
+        "order_id": "2050",
+        "events_seen": 11,
+        "duplicate": true,
+        "verdict": "PASS",
+        "label": "PASS: this checklist is complete; operational release remains with your team",
+        "open": [],
+        "new_actions": [],
+        "release": null,
+        "refused": false,
+        "status": {
+          "freight": "at installer",
+          "customerDelivery": "open",
+          "installation": "open",
+          "released": true
+        },
+        "checklist": "PASS",
+        "release_authorized": false,
+        "has_new_actions": false,
+        "release_decision": "STOP"
       }
     },
     {

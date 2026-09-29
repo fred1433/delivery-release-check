@@ -4,7 +4,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { json, ctx, scenarios, product } from "./helpers.mjs";
 import { workflow } from "../scripts/build_n8n.mjs";
-import { replay } from "../src/rules.js";
+import { replay, validateEvent } from "../src/rules.js";
 
 const wf = json("n8n/workflow.json");
 
@@ -19,6 +19,7 @@ test("every connection points at an existing node; the monday.com node ships dis
     for (const branch of c.main) for (const t of branch) assert.ok(names.has(t.node), t.node);
   }
   assert.equal(wf.nodes.find((n) => n.name.startsWith("monday.com")).disabled, true);
+  assert.match(wf.nodes.find((n) => n.name.startsWith("monday.com")).notes, /^Example only\. Keep external writes disabled/);
 });
 
 test("recorded n8n run: all executions succeeded and every answer equals the engine's", () => {
@@ -28,7 +29,7 @@ test("recorded n8n run: all executions succeeded and every answer equals the eng
   const logs = {};
   for (const c of run.calls) {
     const o = scenarios.orders.find((x) => x.id === c.request.order_id);
-    if (!o || !c.request.event.id) { assert.equal(c.response.decision_valid, false); assert.equal(c.response.release_decision, "STOP"); continue; }
+    if (!o || validateEvent(c.request.event)) { assert.equal(c.response.decision_valid, false, JSON.stringify(c.request.event)); assert.equal(c.response.release_decision, "STOP"); continue; }
     (logs[o.id] ||= []).push(c.request.event);
     const r = replay(o, product(o.handle), logs[o.id], ctx);
     assert.equal(c.response.verdict, r.result.verdict, `${o.id} after ${c.request.event.id}`);

@@ -24,51 +24,379 @@
   },
   "orders": [
     {
-      "id": "2050", "featured": true, "customer": "Sam R., Larimer Street Physio", "city": "Denver", "state": "CO", "zip": "80202",
+      "id": "2050",
+      "featured": true,
+      "customer": "Sam R., Example Physio Clinic (fictional)",
+      "city": "Denver",
+      "state": "CO",
+      "zip": "80202",
       "handle": "woodway-4front-treadmill-w-quick-set-display-remanufactured",
       "events": [
-        {"type": "order_created", "id": "e1", "at": "2026-09-26T10:04:00-06:00", "webhook_id": "wh-6c1f0a", "service": "Curbside Delivery Only"},
-        {"type": "customer_message", "id": "e2", "at": "2026-09-28T09:12:00-06:00", "message": "m-2050-1"},
-        {"type": "payment_received", "id": "e3", "at": "2026-09-28T09:20:00-06:00", "webhook_id": "wh-6c1f0b", "event_id": "ev-88121", "amount": 699, "for_service": "Room of Choice - Stair Carry (4+ Steps)"}
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-26T10:04:00-06:00",
+          "webhook_id": "wh-6c1f0a",
+          "service": "Curbside Delivery Only"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T09:12:00-06:00",
+          "message": "m-2050-1"
+        },
+        {
+          "type": "payment_received",
+          "id": "e3",
+          "at": "2026-09-28T09:20:00-06:00",
+          "webhook_id": "wh-6c1f0b",
+          "event_id": "ev-88121",
+          "amount": 699,
+          "for_service": "Room of Choice - Stair Carry (4+ Steps)"
+        }
       ],
       "walkthrough": [
-        {"step": 1, "label": "Receive the upgrade payment event again", "events": [{"type": "payment_received", "id": "e3r", "at": "2026-09-28T09:20:41-06:00", "webhook_id": "wh-6c1f0b", "event_id": "ev-88121", "amount": 699, "for_service": "Room of Choice - Stair Carry (4+ Steps)"}]},
-        {"step": 2, "label": "Add the doorway measurement", "events": [{"type": "fact_entered", "id": "e4", "at": "2026-09-29T08:40:00-06:00", "key": "narrowest_door_in", "value": 36, "by": "Ops, from the customer's reply email"}]},
-        {"step": 3, "label": "Issue the delivery plan and record the customer's written approval", "events": [
-          {"type": "plan_issued", "id": "e5", "at": "2026-09-29T10:00:00-06:00", "version": 1, "summary": "Three-person crew, stair carry of 22 steps with one landing, unpacking, placement in the clinic, packaging removed. Price already paid: $699. Window: October 20 to 22.", "for": {"service": "Room of Choice - Stair Carry (4+ Steps)", "zip": "80202"}},
-          {"type": "plan_approved", "id": "e6", "at": "2026-09-29T11:15:00-06:00", "version": 1, "by": "Sam R.", "channel": "email", "text": "Approved, plan version 1 as written."}
-        ]},
-        {"step": 4, "label": "Release by your team, then receive \"delivered to installer\"", "events": [
-          {"type": "release_requested", "id": "e7", "at": "2026-09-30T08:00:00-06:00", "by": "Ops", "hold_ids": "owned"},
-          {"type": "carrier_update", "id": "e8", "at": "2026-10-16T14:30:00-06:00", "webhook_id": "wh-6c1f0e", "status": "delivered", "location": "installer", "label": "Delivered to installer warehouse, Commerce City, CO"}
-        ]}
+        {
+          "step": 1,
+          "label": "Replay payment event",
+          "events": [
+            {
+              "type": "payment_received",
+              "id": "e3r",
+              "at": "2026-09-28T09:20:41-06:00",
+              "webhook_id": "wh-6c1f0b",
+              "event_id": "ev-88121",
+              "amount": 699,
+              "for_service": "Room of Choice - Stair Carry (4+ Steps)"
+            }
+          ]
+        },
+        {
+          "step": 2,
+          "label": "Add door width",
+          "events": [
+            {
+              "type": "fact_entered",
+              "id": "e4",
+              "at": "2026-09-29T08:40:00-06:00",
+              "key": "narrowest_door_in",
+              "value": 36,
+              "by": "Ops, from the customer's reply email"
+            }
+          ]
+        },
+        {
+          "step": 3,
+          "label": "Use sample plan and approval",
+          "events": [
+            {
+              "type": "fact_entered",
+              "id": "e4b",
+              "at": "2026-09-29T09:50:00-06:00",
+              "key": "path_photos",
+              "value": "received",
+              "by": "Ops, after reviewing the stairwell photos"
+            },
+            {
+              "type": "plan_issued",
+              "id": "e5",
+              "at": "2026-09-29T10:00:00-06:00",
+              "version": 1,
+              "summary": "Fictional plan details: three-person crew, stair carry of 22 steps with one landing, unpacking, placement in the clinic, packaging removed. Price already paid: $699. Window: October 20 to 22."
+            },
+            {
+              "type": "plan_approved",
+              "id": "e6",
+              "at": "2026-09-29T11:15:00-06:00",
+              "version": 1,
+              "by": "Sam R.",
+              "channel": "email",
+              "text": "Approved, plan version 1 as written."
+            }
+          ]
+        },
+        {
+          "step": 4,
+          "label": "Release; simulate installer receipt",
+          "events": [
+            {
+              "type": "release_requested",
+              "id": "e7",
+              "at": "2026-09-30T08:00:00-06:00",
+              "by": "Ops",
+              "hold_ids": "owned"
+            },
+            {
+              "type": "carrier_update",
+              "id": "e8",
+              "at": "2026-10-16T14:30:00-06:00",
+              "webhook_id": "wh-6c1f0e",
+              "status": "delivered",
+              "location": "installer",
+              "label": "Delivered to installer warehouse, Commerce City, CO"
+            }
+          ]
+        }
       ],
-      "variant": {"label": "Change the delivery address after approval", "events": [{"type": "destination_changed", "id": "e6b", "at": "2026-09-29T12:02:00-06:00", "zip": "80205", "city": "Denver"}]}
+      "variant": {
+        "label": "Change the delivery address after approval",
+        "events": [
+          {
+            "type": "destination_changed",
+            "id": "e6b",
+            "at": "2026-09-29T12:02:00-06:00",
+            "zip": "80205",
+            "city": "Denver"
+          }
+        ]
+      }
     },
     {
-      "id": "2051", "featured": true, "customer": "Marcus T., Riverside Athletic Club", "city": "Reno", "state": "NV", "zip": "89501",
-      "handle": "body-solid-sdc2000g-proclub-line-dual-cable-column-new", "configuration": "(2) 160 lb Weight Stack",
+      "id": "2051",
+      "featured": true,
+      "customer": "Marcus T., Example Athletic Club (fictional)",
+      "city": "Reno",
+      "state": "NV",
+      "zip": "89501",
+      "handle": "body-solid-sdc2000g-proclub-line-dual-cable-column-new",
+      "configuration": "(2) 160 lb Weight Stack",
       "events": [
-        {"type": "order_created", "id": "e1", "at": "2026-09-28T13:40:00-07:00", "webhook_id": "wh-71aa01", "service": "Curbside Delivery Only"},
-        {"type": "customer_message", "id": "e2", "at": "2026-09-28T13:41:00-07:00", "message": "m-2051-1"}
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T13:40:00-07:00",
+          "webhook_id": "wh-71aa01",
+          "service": "Curbside Delivery Only"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T13:41:00-07:00",
+          "message": "m-2051-1"
+        }
       ]
     },
     {
-      "id": "2052", "featured": true, "customer": "Luis M.", "city": "Davis", "state": "CA", "zip": "95616",
+      "id": "2052",
+      "featured": true,
+      "customer": "Luis M.",
+      "city": "Davis",
+      "state": "CA",
+      "zip": "95616",
       "handle": "life-fitness-95t-achieve-treadmill-remanufactured",
       "events": [
-        {"type": "order_created", "id": "e1", "at": "2026-09-27T16:20:00-07:00", "webhook_id": "wh-72bb01", "service": "Garage Delivery - NO Unpacking (Left in Crate)"},
-        {"type": "customer_message", "id": "e2", "at": "2026-09-27T16:21:00-07:00", "message": "m-2052-1"}
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-27T16:20:00-07:00",
+          "webhook_id": "wh-72bb01",
+          "service": "Garage Delivery - NO Unpacking (Left in Crate)"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-27T16:21:00-07:00",
+          "message": "m-2052-1"
+        }
       ]
     },
-    {"id": "1041", "customer": "Dana K.", "city": "Walnut Creek", "state": "CA", "zip": "94596", "handle": "precor-c846i-upright-exercise-bike-remanufactured", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-07:00", "service": "Full Assembly & Installation - Any Room"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-07:00", "message": "m-1041-1"}]},
-    {"id": "1043", "customer": "Priya S.", "city": "Lafayette", "state": "CA", "zip": "94549", "handle": "octane-fitness-xr6000-seated-elliptical-w-smart-screen-remanufactured", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-07:00", "service": "Room of Choice - Ground Level (0-3 Steps)"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-07:00", "message": "m-1043-1"}]},
-    {"id": "1044", "customer": "Luis M.", "city": "Davis", "state": "CA", "zip": "95616", "handle": "life-fitness-95t-achieve-treadmill-remanufactured", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-07:00", "service": "Garage Delivery - NO Unpacking (Left in Crate)"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-07:00", "message": "m-1044-1"}]},
-    {"id": "1045", "customer": "Jordan B.", "city": "Santa Cruz", "state": "CA", "zip": "95060", "handle": "french-fitness-ffb-black-5-stack-multi-jungle-gym-new", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-07:00", "service": "Room of Choice - Stair Carry (4+ Steps)"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-07:00", "message": "m-1045-1"}]},
-    {"id": "1046", "customer": "Rae W., Ponce Row Studio", "city": "Atlanta", "state": "GA", "zip": "30306", "handle": "matrix-indoor-rower-w-lcd-console-remanufactured", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-04:00", "service": "Curbside Delivery Only"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-04:00", "message": "m-1046-1"}]},
-    {"id": "1047", "customer": "Grant H.", "city": "Chico", "state": "CA", "zip": "95926", "handle": "scifit-tc-1000-stair-stepper-remanufactured", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-07:00", "service": "Curbside Delivery Only"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-07:00", "message": "m-1047-1"}]},
-    {"id": "1048", "customer": "Mei L.", "city": "Portland", "state": "OR", "zip": "97201", "handle": "french-fitness-mab30-multi-adjustable-bench-new", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-07:00", "service": "No Thanks – Curbside Delivery Only"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-07:00", "message": "m-1048-1"}]},
-    {"id": "1049", "customer": "Chris O.", "city": "Denver", "state": "CO", "zip": "80202", "handle": "body-solid-fid46-olympic-leverage-flat-incline-decline-bench-new", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-28T10:00:00-06:00", "service": "Assembly - Any Room (2 Step Process)"}, {"type": "customer_message", "id": "e2", "at": "2026-09-28T10:01:00-06:00", "message": "m-1049-1"}]},
-    {"id": "1051", "customer": "Alex P.", "city": "Boise", "state": "ID", "zip": "83702", "handle": "schwinn-ac-sport-9-7340-wintp0-bike-new", "events": [{"type": "order_created", "id": "e1", "at": "2026-09-22T14:03:00-07:00", "service": "Full Assembly & Installation - Any Room"}, {"type": "customer_message", "id": "e2", "at": "2026-09-22T14:04:00-07:00", "message": "m-1051-1"}]}
+    {
+      "id": "1041",
+      "customer": "Dana K.",
+      "city": "Walnut Creek",
+      "state": "CA",
+      "zip": "94596",
+      "handle": "precor-c846i-upright-exercise-bike-remanufactured",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-07:00",
+          "service": "Full Assembly & Installation - Any Room"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-07:00",
+          "message": "m-1041-1"
+        }
+      ]
+    },
+    {
+      "id": "1043",
+      "customer": "Priya S.",
+      "city": "Lafayette",
+      "state": "CA",
+      "zip": "94549",
+      "handle": "octane-fitness-xr6000-seated-elliptical-w-smart-screen-remanufactured",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-07:00",
+          "service": "Room of Choice - Ground Level (0-3 Steps)"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-07:00",
+          "message": "m-1043-1"
+        }
+      ]
+    },
+    {
+      "id": "1044",
+      "customer": "Luis M.",
+      "city": "Davis",
+      "state": "CA",
+      "zip": "95616",
+      "handle": "life-fitness-95t-achieve-treadmill-remanufactured",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-07:00",
+          "service": "Garage Delivery - NO Unpacking (Left in Crate)"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-07:00",
+          "message": "m-1044-1"
+        }
+      ]
+    },
+    {
+      "id": "1045",
+      "customer": "Jordan B.",
+      "city": "Santa Cruz",
+      "state": "CA",
+      "zip": "95060",
+      "handle": "french-fitness-ffb-black-5-stack-multi-jungle-gym-new",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-07:00",
+          "service": "Room of Choice - Stair Carry (4+ Steps)"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-07:00",
+          "message": "m-1045-1"
+        }
+      ]
+    },
+    {
+      "id": "1046",
+      "customer": "Rae W., Example Row Studio (fictional)",
+      "city": "Atlanta",
+      "state": "GA",
+      "zip": "30306",
+      "handle": "matrix-indoor-rower-w-lcd-console-remanufactured",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-04:00",
+          "service": "Curbside Delivery Only"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-04:00",
+          "message": "m-1046-1"
+        }
+      ]
+    },
+    {
+      "id": "1047",
+      "customer": "Grant H.",
+      "city": "Chico",
+      "state": "CA",
+      "zip": "95926",
+      "handle": "scifit-tc-1000-stair-stepper-remanufactured",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-07:00",
+          "service": "Curbside Delivery Only"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-07:00",
+          "message": "m-1047-1"
+        }
+      ]
+    },
+    {
+      "id": "1048",
+      "customer": "Mei L.",
+      "city": "Portland",
+      "state": "OR",
+      "zip": "97201",
+      "handle": "french-fitness-mab30-multi-adjustable-bench-new",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-07:00",
+          "service": "No Thanks – Curbside Delivery Only"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-07:00",
+          "message": "m-1048-1"
+        }
+      ]
+    },
+    {
+      "id": "1049",
+      "customer": "Chris O.",
+      "city": "Denver",
+      "state": "CO",
+      "zip": "80202",
+      "handle": "body-solid-fid46-olympic-leverage-flat-incline-decline-bench-new",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-28T10:00:00-06:00",
+          "service": "Assembly - Any Room (2 Step Process)"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-28T10:01:00-06:00",
+          "message": "m-1049-1"
+        }
+      ]
+    },
+    {
+      "id": "1051",
+      "customer": "Alex P.",
+      "city": "Boise",
+      "state": "ID",
+      "zip": "83702",
+      "handle": "schwinn-ac-sport-9-7340-wintp0-bike-new",
+      "events": [
+        {
+          "type": "order_created",
+          "id": "e1",
+          "at": "2026-09-22T14:03:00-07:00",
+          "service": "Full Assembly & Installation - Any Room"
+        },
+        {
+          "type": "customer_message",
+          "id": "e2",
+          "at": "2026-09-22T14:04:00-07:00",
+          "message": "m-1051-1"
+        }
+      ]
+    }
   ]
 }

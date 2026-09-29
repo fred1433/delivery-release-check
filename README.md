@@ -42,7 +42,8 @@ Source: pages read on 2026-09-29. Status for every rule: derived from public pag
 | --- | --- | --- | --- | --- |
 | Access facts before shipping: room, narrowest door, path photos, step count | Product page, Shipping Information | Room of choice, any room, garage installation, two-step | HOLD per missing fact | rules, replay |
 | Steps against service paid (more than 3 on ground level) | Product page | Room of choice services | HOLD | rules |
-| Garage delivery path: softer dirt, grass or a ledge | Product page | Garage delivery | HOLD; gravel is cleared, not flagged | rules |
+| Garage delivery path: softer dirt, grass or a ledge; surface and garage lip must both be known | Product page, Shipping Information | Garage delivery | HOLD; gravel is cleared, not flagged; unknown lip is not "none" | rules, verdict_fixes |
+| Garage installation path at least 60 in, no ledge or stair | Product page | Garage installation | HOLD | verdict_fixes |
 | Delivery plan confirmed and approved in writing, per version; a later change of address or service voids it for good (undoing the change does not revive it) | Product page (two-step: final written YES); set by us for other room services | Room services | HOLD | replay, rules |
 | Shopify shipping weight and page weight on opposite sides of 150 lb, or manufacturer weight differs by configuration | Shipping policy, product page, manufacturer | All | REVIEW for the catalog owner; never a customer question; no value replaced | rules, sources |
 | Published size wider than the narrowest door | Product page dimensions (visible L x W x H when shown) | Fully or mostly assembled machines; boxed machines say "not compared" | REVIEW (feasibility), never "impossible" | rules, review_fixes |
@@ -53,11 +54,22 @@ Source: pages read on 2026-09-29. Status for every rule: derived from public pag
 | Change after release | Set by us | Released orders | HOLD; the page locks its fields | review_fixes |
 | Release only with explicit, owned hold IDs | Shopify `fulfillmentOrderReleaseHold` docs | Any release | Refused otherwise | replay |
 
+## What is connected
+
+The browser demonstrates event replay without external writes. The repository includes an n8n test workflow and a separately tested persistent action ledger. The production action executor is not connected.
+
+Example only. Keep external writes disabled until event validation, persistent state and action execution are connected and tested together.
+
+A checklist PASS is not a release: the n8n response carries `checklist` and, separately, `release_authorized`, true only when a release event succeeded with named holds.
+
 ## Runbook
 
-- Duplicates: deliveries are deduplicated on the webhook id; payments on the event id. Business actions (drafts, tasks, payments) go through the durable ledger, which survives restarts and does not expire after 30 minutes. An action whose outcome is unknown is reconciled with the remote system before any retry.
+- Events: every event is validated (supported type, required fields, known carrier status and location) before it is stored or replayed; an invalid one returns `release_decision: STOP` and changes nothing.
+- Duplicates: a repeated delivery (same webhook id) and a repeated business event under a new delivery (same event id) are both ignored and change nothing. In the Node code, business actions go through `src/ledger.mjs`, which survives restarts and does not expire after 30 minutes; the n8n example uses workflow static data instead.
+- Plans: versions are immutable. An approval covers the snapshot the plan was written for (service, address, step count, narrowest door); any change voids it for good.
+- Carrier: only `delivered` at `customer` closes customer delivery. Terminal and installer receipts close the freight leg only. Carrier updates for an unreleased order advance nothing.
 - Failure handling: a missing, malformed or unknown event returns `release_decision: STOP`, never PASS. Only an explicit, current PASS continues toward the (simulated) handoff.
-- Credentials: none in this repository. The monday.com node ships disabled with no credential; attach an HTTP header credential and a board id to use it.
+- Credentials: none in this repository. The monday.com node is example only: keep external writes disabled until event validation, persistent state and action execution are connected and tested together. It is reached only when an event produces new actions.
 - Rollback: the workflow writes nothing outside n8n while the monday.com node is disabled. Deactivating the workflow removes it from the order path.
 
 ## What this does not prove
@@ -66,6 +78,6 @@ Source: pages read on 2026-09-29. Status for every rule: derived from public pag
 - The order structure is illustrative: how add-ons and payments are really recorded has not been checked.
 - A monday.com item is a warning, not a lock. Blocking a real release needs the route that actually releases shipments.
 - The extraction is a frozen example: one model read each fictional message once. A quote proves where a fact came from, not that it was read right. Known miss: in order 1043 the model did not extract "The bedroom door is 30 inches wide" (test `known extraction miss`).
-- "Customer says sent" for path photos is the customer's claim; nobody has checked the photos.
+- "Customer says sent" does not clear the photo requirement; only "received and reviewed by your team" does. The sample plan in step 3 includes that review.
 - Distances are straight lines between Census ZIP centroids; road miles are longer.
 - In n8n, the action record uses workflow static data, which is fine for the test instance; production needs a database table.

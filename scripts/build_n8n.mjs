@@ -41,7 +41,9 @@ const invalid = (why) => [{ json: { decision_valid: false, release_decision: 'ST
 const order = FIX.scenarios.orders.find((o) => o.id === String(body.order_id));
 if (!order) return invalid('unknown order_id');
 const ev = body.event;
-if (!ev || typeof ev.type !== 'string' || typeof ev.id !== 'string' || typeof ev.at !== 'string') return invalid('event needs type, id and at');
+// Validate the type and the fields that type needs BEFORE the event is stored or replayed.
+const why = validateEvent(ev);
+if (why) return invalid(why);
 const product = FIX.products.find((p) => p.handle === order.handle);
 const log = (store.events[order.id] = store.events[order.id] || []);
 log.push(ev);
@@ -63,6 +65,10 @@ return [{ json: {
   refused: !!last.refused,
   status: last.status || null,
   // Only an explicit, current PASS continues toward the (simulated) handoff. Anything else stops.
+  checklist: r.verdict,
+  // A checklist PASS is not a release: release_authorized is true only when a release event succeeded with named holds.
+  release_authorized: !!last.release,
+  has_new_actions: last.actions.length > 0,
   release_decision: last.duplicate || r.verdict !== 'PASS' ? 'STOP' : last.status && last.status.released && ev.type !== 'release_requested' ? 'NO_ACTION' : 'CONTINUE',
 } }];
 `;
@@ -77,14 +83,16 @@ export function workflow() {
       { parameters: { jsCode: code }, id: "a1f0c0de-0001-4000-8000-000000000002", name: "Decide", type: "n8n-nodes-base.code", typeVersion: 2, position: [240, 0] },
       { parameters: { respondWith: "firstIncomingItem", options: {} }, id: "a1f0c0de-0001-4000-8000-000000000003", name: "Return decision", type: "n8n-nodes-base.respondToWebhook", typeVersion: 1.1, position: [480, 0] },
       { parameters: { conditions: { options: { caseSensitive: true, leftValue: "", typeValidation: "strict" }, conditions: [{ id: "c0nd-0001", leftValue: "={{ $json.release_decision }}", rightValue: "CONTINUE", operator: { type: "string", operation: "equals" } }], combinator: "and" }, options: {} }, id: "a1f0c0de-0001-4000-8000-000000000004", name: "Explicit PASS?", type: "n8n-nodes-base.if", typeVersion: 2, position: [720, 0] },
-      { parameters: {}, id: "a1f0c0de-0001-4000-8000-000000000005", name: "Simulated handoff (your team releases)", type: "n8n-nodes-base.noOp", typeVersion: 1, position: [960, -120] },
-      { parameters: { method: "POST", url: "https://api.monday.com/v2", authentication: "genericCredentialType", genericAuthType: "httpHeaderAuth", sendHeaders: true, headerParameters: { parameters: [{ name: "Idempotency-Key", value: "={{ 'drc-' + $json.order_id + '-' + ($json.open || []).join('+') }}" }, { name: "API-Version", value: "2025-10" }] }, sendBody: true, specifyBody: "json", jsonBody: "={{ JSON.stringify({ query: 'mutation ($board: ID!, $name: String!) { create_item (board_id: $board, item_name: $name) { id } }', variables: { board: 'REPLACE_WITH_BOARD_ID', name: 'Order ' + $json.order_id + ': ' + $json.label } }) }}", options: {} }, id: "a1f0c0de-0001-4000-8000-000000000006", name: "monday.com item (disabled until a board and credential are set)", type: "n8n-nodes-base.httpRequest", typeVersion: 4.2, position: [960, 120], disabled: true },
+      { parameters: {}, id: "a1f0c0de-0001-4000-8000-000000000005", name: "Checklist passed (release stays with your team)", type: "n8n-nodes-base.noOp", typeVersion: 1, position: [960, -120] },
+      { parameters: { conditions: { options: { caseSensitive: true, leftValue: "", typeValidation: "strict" }, conditions: [{ id: "c0nd-0002", leftValue: "={{ $json.has_new_actions }}", rightValue: true, operator: { type: "boolean", operation: "true", singleValue: true } }], combinator: "and" }, options: {} }, id: "a1f0c0de-0001-4000-8000-000000000007", name: "New actions?", type: "n8n-nodes-base.if", typeVersion: 2, position: [960, 120] },
+      { parameters: { method: "POST", url: "https://api.monday.com/v2", authentication: "genericCredentialType", genericAuthType: "httpHeaderAuth", sendHeaders: true, headerParameters: { parameters: [{ name: "Idempotency-Key", value: "={{ 'drc-' + $json.order_id + '-' + ($json.open || []).join('+') }}" }, { name: "API-Version", value: "2025-10" }] }, sendBody: true, specifyBody: "json", jsonBody: "={{ JSON.stringify({ query: 'mutation ($board: ID!, $name: String!) { create_item (board_id: $board, item_name: $name) { id } }', variables: { board: 'REPLACE_WITH_BOARD_ID', name: 'Order ' + $json.order_id + ': ' + $json.label } }) }}", options: {} }, id: "a1f0c0de-0001-4000-8000-000000000006", name: "monday.com item (example only, disabled)", notes: "Example only. Keep external writes disabled until event validation, persistent state and action execution are connected and tested together.", type: "n8n-nodes-base.httpRequest", typeVersion: 4.2, position: [1200, 120], disabled: true },
     ],
     connections: {
       "Order event": { main: [[{ node: "Decide", type: "main", index: 0 }]] },
       Decide: { main: [[{ node: "Return decision", type: "main", index: 0 }]] },
       "Return decision": { main: [[{ node: "Explicit PASS?", type: "main", index: 0 }]] },
-      "Explicit PASS?": { main: [[{ node: "Simulated handoff (your team releases)", type: "main", index: 0 }], [{ node: "monday.com item (disabled until a board and credential are set)", type: "main", index: 0 }]] },
+      "Explicit PASS?": { main: [[{ node: "Checklist passed (release stays with your team)", type: "main", index: 0 }], [{ node: "New actions?", type: "main", index: 0 }]] },
+      "New actions?": { main: [[{ node: "monday.com item (example only, disabled)", type: "main", index: 0 }], []] },
     },
     settings: { executionOrder: "v1" },
     pinData: {},

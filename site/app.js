@@ -1,4 +1,5 @@
-import { replay, SOURCES } from "./rules.js";
+import { replay, SOURCES, PROPOSED_APPROVAL } from "./rules.js";
+import { appendStep, canRelease } from "./walk.js";
 
 const load = (f) => fetch(f).then((r) => r.json());
 const [catalog, scenarios, extractions, zips, manufacturer] = await Promise.all([
@@ -8,32 +9,69 @@ const ctx = { asOf: scenarios.as_of, zips: zips.zips, texts: scenarios.messages,
 const featured = scenarios.orders.filter((o) => o.featured);
 const STUB_NAMES = { 2050: "The stair carry", 2051: "The weight on file", 2052: "The gravel driveway" };
 
-const state = { current: featured[0].id, step: 0, variant: false, edits: {}, lastVerdict: {}, lastChange: null };
+// One chronological history per order: every click and every edit is appended after what already happened.
+const state = { current: featured[0].id, history: {}, step: {}, variant: {}, lastVerdict: {}, lastChange: null, seq: 0 };
+for (const o of featured) { state.history[o.id] = [...o.events]; state.step[o.id] = 0; }
+
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const money = (n) => "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
 const productOf = (o) => catalog.products.find((p) => p.handle === o.handle);
 const shortName = (t) => t.replace(/\s*\((New|Remanufactured|Used)\)\s*$/, "");
 const condOf = (t) => (/\(Remanufactured\)/.test(t) ? "Remanufactured" : /\(New\)/.test(t) ? "New" : "");
+const cur = () => featured.find((x) => x.id === state.current);
+const run = (o, h) => replay(o, productOf(o), h || state.history[o.id], ctx);
+const stamp = () => `2026-09-30T${String(8 + Math.floor(state.seq / 60)).padStart(2, "0")}:${String(state.seq++ % 60).padStart(2, "0")}:00-06:00`;
 
-function eventsFor(o) {
-  let evs = [...o.events];
-  if (o.walkthrough) {
-    for (const w of o.walkthrough) {
-      if (w.step > state.step) break;
-      if (w.step === 4 && state.variant) break;
-      evs.push(...w.events);
-      if (w.step === 3 && state.variant) evs.push(...o.variant.events);
-    }
-  }
-  return evs.concat(state.edits[o.id] || []);
+// Short names for open items, used by the state chips and the change line.
+function short(i, st) {
+    const map = {
+      "access:narrowest_door_in": "Door width missing", "access:stairs_count": "Step count missing", "access:room_location": "Room missing",
+      "access:path_photos": i.title.includes("customer says") ? "Photos not reviewed" : "Photos missing",
+      authorization: st.approvals && Object.keys(st.approvals).length ? "Plan approval stale" : "Plan approval missing",
+      "config:weight": "Weight to confirm", door: "Door feasibility", "access:garage-ledge": "Garage lip unknown", "access:garage-surface": "Driveway unknown",
+      "access:garage": "Garage path blocked", "after-release": "Changed after release", carrier: "Carrier update to check",
+    };
+    return map[i.id] || i.title;
 }
-const run = (o, evs) => replay(o, productOf(o), evs || eventsFor(o), ctx);
+
+// Short state chips: what the ticket says right now, in a few words.
+function chips(r) {
+  const st = r.state, res = r.result;
+  const out = [];
+  if (st.payments.length) out.push({ t: `${money(st.payments[0].amount)} recorded once`, k: "ok" });
+  for (const i of res.issues.filter((x) => x.kind === "hold" || x.kind === "review")) out.push({ t: short(i, st), k: i.kind });
+  if (res.verdict === "PASS") out.push({ t: st.released ? "Released by your team" : "Checklist complete", k: "pass" });
+  if (st.freight === "at installer") out.push({ t: "At the installer; customer delivery open", k: "info" });
+  return out;
+}
+
+function describeChange(before, after) {
+  const b = new Set(before.result.openIds), a = new Set(after.result.openIds);
+  const title = (id, r) => { const i = r.result.issues.find((x) => x.id === id); return i ? short(i, r.state) : id; };
+  const newEntries = after.timeline.slice(before.timeline.length);
+  const parts = [];
+  if (newEntries.some((t) => t.duplicate)) parts.push("Payment event ignored.");
+  for (const t of newEntries) for (const e of t.effects) if (/not accepted|refused|rejected|immutable/i.test(e)) parts.push(e.charAt(0).toUpperCase() + e.slice(1));
+  const gone = [...b].filter((x) => !a.has(x));
+  const added = [...a].filter((x) => !b.has(x));
+  const still = [...a].filter((x) => b.has(x));
+  if (gone.length) parts.push(`Resolved: ${gone.map((g) => title(g, before).toLowerCase()).join(", ")}.`);
+  if (added.length) parts.push(`New: ${added.map((g) => title(g, after).toLowerCase()).join(", ")}.`);
+  if (newEntries.some((t) => t.duplicate)) parts.push(still.length === 1 ? "The hold remains." : still.length === 2 ? "Both holds remain." : `All ${still.length} holds remain.`);
+  else if (still.length && (gone.length || added.length)) parts.push(`Still open: ${still.map((g) => title(g, after).toLowerCase()).join(", ")}.`);
+  const newActions = newEntries.flatMap((t) => t.actions).length;
+  if (newEntries.some((t) => t.duplicate) && !newActions) parts.push("No new draft or task.");
+  if (newEntries.some((t) => t.release)) parts.push("Released by your team, naming the holds this workflow owns.");
+  if (after.state.freight === "at installer" && before.state.freight !== "at installer") parts.push("Freight is at the installer. Customer delivery and installation: still open.");
+  if (!parts.length) parts.push(`No change to the open items: ${[...a].map((g) => title(g, after).toLowerCase()).join(", ") || "none"}.`);
+  return parts.join(" ");
+}
 
 function renderStubs() {
   document.getElementById("stubs").innerHTML = featured.map((o) => {
     const r = run(o);
-    const cur = o.id === state.current;
-    return `<li><button type="button" class="stub${cur ? " is-current" : ""}" data-id="${o.id}"${cur ? ' aria-current="true"' : ""}>
+    const isCur = o.id === state.current;
+    return `<li><button type="button" class="stub${isCur ? " is-current" : ""}" data-id="${o.id}"${isCur ? ' aria-current="true"' : ""}>
       <span class="stub-no">${o.id}</span>
       <span class="stub-what">${STUB_NAMES[o.id]}</span>
       <span class="stub-where">${esc(shortName(productOf(o).title))}</span>
@@ -42,52 +80,27 @@ function renderStubs() {
   }).join("");
 }
 
-function renderWalk(o) {
-  const el = document.getElementById("walk");
-  if (!o.walkthrough) { el.hidden = true; el.innerHTML = ""; return; }
-  el.hidden = false;
-  const steps = o.walkthrough.map((w) => {
-    const done = w.step <= state.step && !(w.step === 4 && state.variant);
-    const next = w.step === state.step + 1 && !(w.step === 4 && state.variant);
-    return `<li class="${done ? "done" : next ? "next" : "later"}">
-      <span class="w-num">${w.step}</span>
-      <span class="w-label">${esc(w.label)}</span>
-      ${next ? `<button type="button" class="act" data-act="step">${["", "Send it again", "Add 36 in", "Issue and approve", "Release and deliver"][w.step]}</button>` : done ? `<span class="w-done">Done</span>` : ""}
-    </li>`;
-  }).join("");
-  const variant = state.step === 3 && !state.variant
-    ? `<button type="button" class="variant" data-act="variant">Or instead: ${esc(o.variant.label.charAt(0).toLowerCase() + o.variant.label.slice(1))}</button>`
-    : state.variant ? `<p class="w-note">Address changed after approval. Step 4 waits for a new plan; start the order over to try it.</p>` : "";
-  const change = state.lastChange ? `<p class="w-change">${state.lastChange}</p>` : `<p class="w-change quiet">Four things happen to this order. Run them in order and watch what changes on the ticket, and what does not.</p>`;
-  el.innerHTML = `<ol class="w-steps">${steps}</ol>${variant}${change}${state.step > 0 || state.variant ? `<button type="button" class="reset" data-act="restart">Start the order over</button>` : ""}`;
-}
-
-function describeChange(before, after) {
-  const b = new Set(before.result.openIds), a = new Set(after.result.openIds);
-  const gone = [...b].filter((x) => !a.has(x));
-  const added = [...a].filter((x) => !b.has(x));
-  const last = after.timeline.at(-1);
-  const name = (id, r) => (r.result.issues.find((i) => i.id === id) || {}).title || id;
-  const parts = [];
-  const fresh = after.timeline.length > before.timeline.length;
-  if (fresh && last.duplicate) parts.push(`Same webhook delivered again: ignored. Payments recorded: ${after.state.payments.length}.`);
-  const refused = fresh && last.effects.find((x) => x.includes("not accepted"));
-  if (refused) parts.push(refused.charAt(0).toUpperCase() + refused.slice(1));
-  if (gone.length) parts.push(`Resolved: ${gone.map((g) => name(g, before)).join(", ")}.`);
-  const addedIssues = added.map((g) => after.result.issues.find((x) => x.id === g));
-  const blank = addedIssues.filter((i) => i.finding === "Not on file.");
-  const full = addedIssues.filter((i) => i.finding !== "Not on file.");
-  if (blank.length) parts.push(`Now missing: ${blank.map((i) => i.title.toLowerCase()).join(", ")}.`);
-  if (full.length) parts.push(`New: ${full.map((i) => `${i.title}. ${i.finding}`).join(" ")}`);
-  const rel = after.timeline.find((t) => t.release);
-  if (rel && !before.timeline.some((t) => t.release)) parts.push(`Released by your team, naming the ${rel.release.variables.holdIds.length} holds this workflow owns.`);
-  const still = [...a].filter((x) => b.has(x));
-  if (still.length) parts.push(`Still open: ${still.map((g) => name(g, after)).join(", ")}.`);
-  const newActions = after.timeline.flatMap((t) => t.actions).length - before.timeline.flatMap((t) => t.actions).length;
-  if (fresh && last.duplicate) parts.push(newActions ? "" : "No new draft, no new task, no release.");
-  if (after.state.freight === "at installer") parts.push("Freight leg done. Customer delivery and installation: still open.");
-  if (!parts.length) parts.push(`Verdict: ${after.result.verdict}.`);
-  return parts.filter(Boolean).join(" ");
+function renderNow(o, r) {
+  const el = document.getElementById("now");
+  const c = chips(r).map((x) => `<li class="chip ${x.k}">${esc(x.t)}</li>`).join("");
+  let action = "";
+  if (o.walkthrough) {
+    const step = state.step[o.id];
+    const next = o.walkthrough.find((w) => w.step === step + 1);
+    const blockedByVariant = state.variant[o.id];
+    const releaseOk = next && next.step === 4 ? canRelease(o, productOf(o), state.history[o.id], ctx) : true;
+    const outline = o.walkthrough.map((w) => `<li class="${w.step <= step ? "done" : w.step === step + 1 ? "next" : ""}">${esc(w.label)}</li>`).join("");
+    action = `<div class="now-act">
+      ${next && !blockedByVariant ? `<span class="now-step">Step ${next.step} of 4</span>
+        <button type="button" class="act" data-act="step"${releaseOk ? "" : " disabled"}>${esc(next.label)}</button>
+        ${releaseOk ? "" : `<span class="now-why">Release waits for a PASS on the ticket.</span>`}` : `<span class="now-step">${blockedByVariant ? "Address changed after approval: a new plan is needed" : "All four steps done"}</span>`}
+      ${step === 3 && !blockedByVariant ? `<button type="button" class="variant" data-act="variant">Or: change the delivery address first</button>` : ""}
+      ${step > 0 || blockedByVariant || state.history[o.id].length > o.events.length ? `<button type="button" class="reset" data-act="restart">Start over</button>` : ""}
+    </div>
+    <ol class="outline">${outline}</ol>`;
+  }
+  const change = state.lastChange ? `<p class="now-change">${esc(state.lastChange)}</p>` : "";
+  el.innerHTML = `<ul class="chips" aria-label="Current state">${c}</ul>${change}${action}`;
 }
 
 function sourceOf(q, product) {
@@ -103,6 +116,7 @@ function issueRow(i, product) {
     <span class="i-mark">${mark}</span>
     <div class="i-body">
       <h3>${esc(i.title)}</h3>
+      ${i.proposed ? `<p class="i-proposed">${esc(PROPOSED_APPROVAL)}</p>` : ""}
       <p>${esc(i.finding)}</p>
       ${i.note ? `<p class="i-note">${esc(i.note)}</p>` : ""}
       ${i.calc ? `<p class="i-note">${esc(i.calc)}</p>` : ""}
@@ -124,7 +138,7 @@ function markMessage(text, facts, id) {
 const FACT_ROWS = [
   { k: "narrowest_door_in", label: "Narrowest door (in)", kind: "number", room: true },
   { k: "stairs_count", label: "Steps, street to room", kind: "number", room: true },
-  { k: "path_photos", label: "Path photos", kind: "select", opts: [["", "Not on file"], ["promised", "Promised"], ["sent", "Customer says sent"]], room: true },
+  { k: "path_photos", label: "Path photos", kind: "select", opts: [["", "Not on file"], ["promised", "Promised"], ["sent", "Customer says sent"], ["received", "Received and reviewed by your team"]], room: true },
   { k: "driveway_surface", label: "Driveway", kind: "select", opts: [["", "Not stated"], ["paved", "Paved"], ["gravel", "Gravel"], ["dirt", "Dirt"], ["grass", "Grass"], ["mixed_soft", "Soft when wet"]], garage: true },
   { k: "ledge_or_step_at_garage", label: "Lip at garage door", kind: "select", opts: [["", "Not stated"], ["false", "None"], ["true", "Yes"]], garage: true },
 ];
@@ -141,10 +155,8 @@ function factRow(row, facts, locked) {
   return `<div class="fact"><label class="flabel">${row.label}</label>${control}${origin}</div>`;
 }
 
-function renderTicket() {
-  const o = featured.find((x) => x.id === state.current);
+function renderTicket(o, r) {
   const product = productOf(o);
-  const r = run(o);
   const st = r.state;
   const res = r.result;
   const verdict = res.verdict.toLowerCase();
@@ -157,14 +169,13 @@ function renderTicket() {
   const cleared = issues.filter((i) => i.kind === "cleared");
   const info = issues.filter((i) => i.kind === "info");
   const room = /Any Room|Room of Choice|Garage Installation|2 Step/.test(st.service);
-  const garage = /Garage Delivery/.test(st.service);
+  const garage = /Garage/.test(st.service);
   const rows = FACT_ROWS.filter((f) => (f.room && room) || (f.garage && garage));
   const d = product.dimensions_in || {};
-  const chosen = product.delivery_options.find((x) => x.name === st.service);
   const actions = r.timeline.flatMap((t) => t.actions);
-  const draft = st.draft;
   const opsItems = actions.filter((a) => a.kind === "ops-item");
   const labelText = res.label.replace(/^(HOLD|REVIEW|PASS): /, "");
+  const plans = Object.values(st.plans).sort((a, b) => b.version - a.version);
   const el = document.getElementById("ticket");
   el.className = `ticket v-${verdict}`;
   el.innerHTML = `
@@ -179,13 +190,14 @@ function renderTicket() {
     <p class="t-label ${verdict}">${esc(labelText)}</p>
 
     <div class="t-grid">
-      <div class="box wide"><span class="blabel">Machine</span><a class="entry" href="${product.url}" target="_blank" rel="noopener">${esc(shortName(product.title))}</a><span class="sub">${condOf(product.title)}, ${money(product.price)}. Ships ${esc(product.ships_as.replace(/ \(.*\)$/, "").toLowerCase())}. ${d.length ?? "?"} × ${d.width ?? "?"} × ${d.height ?? "?"} in.${o.configuration ? ` Configuration: ${esc(o.configuration)}.` : ""}</span></div>
+      <div class="box wide"><span class="blabel">Machine</span><a class="entry" href="${product.url}" target="_blank" rel="noopener">${esc(shortName(product.title))}</a><span class="sub">${condOf(product.title)}, ${money(product.price)}. Ships ${esc(product.ships_as.replace(/ \(.*\)$/, "").toLowerCase())}. ${d.length ?? "?"} × ${d.width ?? "?"} × ${d.height ?? "?"} in (L × W × H).${o.configuration ? ` Configuration: ${esc(o.configuration)}.` : ""}</span></div>
       <div class="box wide service"><span class="blabel">Service on the order</span>
         <select data-fact="service" aria-label="Service on the order"${st.released ? " disabled" : ""}>${product.delivery_options.map((x) => `<option value="${esc(x.name)}"${x.name === st.service ? " selected" : ""}>${esc(x.name)}${x.price ? ", " + money(x.price) : ", included"}</option>`).join("")}</select>
         <span class="sub">Services and prices exactly as this product page lists them</span></div>
       <div class="box"><span class="blabel">Payments recorded</span><span class="entry">${st.payments.length ? st.payments.map((p) => money(p.amount)).join(" + ") : "Order total only"}</span><span class="sub">${st.payments.length ? "for " + esc(st.payments[0].for) : "no upgrade payment"}</span></div>
-      <div class="box"><span class="blabel">Freight</span><span class="entry">${st.released ? (st.freight === "at installer" ? "At the installer" : "Released") : "Not released"}</span><span class="sub">${st.released ? "released by your team, naming its holds" : "nothing leaves before a PASS"}</span></div>
+      <div class="box"><span class="blabel">Freight</span><span class="entry">${st.released ? (st.freight === "at installer" ? "At the installer" : st.freight === "at terminal" ? "At the terminal" : st.freight === "delivered" ? "Delivered" : "Released") : "Not released"}</span><span class="sub">${st.released ? "released by your team, naming its holds" : "a checklist PASS does not release anything"}</span></div>
       <div class="box"><span class="blabel">Customer delivery and installation</span><span class="entry">${st.customerDelivery === "delivered" ? "Delivered" : "Open"}</span><span class="sub">${st.installation === "installed" ? "installed" : "not installed"}</span></div>
+      ${plans.length ? `<div class="box wide"><span class="blabel">Delivery plan on file</span><span class="entry small">Version ${plans[0].version}${st.approvals[plans[0].version] ? `, approved in writing by ${esc(st.approvals[plans[0].version].by)}` : ", not approved"}</span><span class="sub">${esc(plans[0].summary)}</span></div>` : ""}
     </div>
 
     ${st.earlierMessages.map((m) => `<div class="msg-box earlier"><span class="blabel">Customer message, ${m.at.slice(5, 10).replace("-", "/")} <em>(fictional; describes the earlier address, not used for this one)</em></span><p class="msg-text">${esc(scenarios.messages[m.message])}</p></div>`).join("")}
@@ -200,7 +212,7 @@ function renderTicket() {
     <div class="outcome">
       <div>
         <span class="blabel">Draft to the customer <em>(not sent)</em></span>
-        ${draft ? `<pre class="draft">${esc(draft.text)}</pre>` : `<p class="draft none">${main.some((i) => i.kind === "hold" || i.kind === "review") ? "Nothing to ask the customer. The open items belong to your team." : "Nothing to ask the customer."}</p>`}
+        ${st.draft ? `<pre class="draft">${esc(st.draft.text)}</pre>` : `<p class="draft none">${main.some((i) => i.kind === "hold" || i.kind === "review") ? "Nothing to ask the customer. The open items belong to your team." : "Nothing to ask the customer."}</p>`}
       </div>
       <div>
         <span class="blabel">Tasks for your team <em>(one per open item, never twice)</em></span>
@@ -209,13 +221,26 @@ function renderTicket() {
     </div>
 
     <details class="record"><summary>Execution record, ${r.timeline.length} events</summary>
-      <ol>${r.timeline.map((t) => `<li class="${t.duplicate ? "dup" : ""}"><span class="r-time">${t.event.at.slice(5, 16).replace("T", " ")}</span><span class="r-what">${esc(t.effects.join(" "))}</span><span class="r-v">${t.duplicate ? "ignored" : t.result ? t.result.verdict.toLowerCase() : ""}</span></li>`).join("")}</ol>
-      <p class="i-note">Normalized test events, not native Shopify payloads.</p>
+      <ol>${r.timeline.map((t) => `<li class="${t.duplicate || t.rejected ? "dup" : ""}"><span class="r-time">${t.event.at.slice(5, 16).replace("T", " ")}</span><span class="r-what">${esc(t.effects.join(" "))}</span><span class="r-v">${t.duplicate ? "ignored" : t.rejected ? "rejected" : t.result ? t.result.verdict.toLowerCase() : ""}</span></li>`).join("")}</ol>
+      <p class="i-note">Normalized test events in the order they happened, not native Shopify payloads.</p>
     </details>
   `;
 }
 
-function render() { renderStubs(); renderWalk(featured.find((x) => x.id === state.current)); renderTicket(); }
+function render() {
+  const o = cur();
+  const r = run(o);
+  renderStubs();
+  renderNow(o, r);
+  renderTicket(o, r);
+}
+
+function apply(o, next) {
+  const before = run(o);
+  state.history[o.id] = next;
+  state.lastChange = describeChange(before, run(o));
+  render();
+}
 
 document.getElementById("stubs").addEventListener("click", (e) => {
   const b = e.target.closest("button[data-id]");
@@ -225,48 +250,39 @@ document.getElementById("stubs").addEventListener("click", (e) => {
   render();
 });
 
-document.getElementById("walk").addEventListener("click", (e) => {
+document.getElementById("now").addEventListener("click", (e) => {
   const b = e.target.closest("[data-act]");
-  if (!b) return;
-  const o = featured.find((x) => x.id === state.current);
+  if (!b || b.disabled) return;
+  const o = cur();
   if (b.dataset.act === "step") {
-    const before = run(o);
-    state.step += 1;
-    state.lastChange = esc(describeChange(before, run(o)));
+    const n = state.step[o.id] + 1;
+    const h = state.history[o.id];
+    const next = appendStep(o, productOf(o), h, n, ctx).map((ev, i) => (i < h.length ? ev : { ...ev, at: stamp() }));
+    state.step[o.id] = n;
+    apply(o, next);
   }
-  if (b.dataset.act === "restart") { state.step = 0; state.variant = false; state.edits[o.id] = []; state.lastChange = null; }
   if (b.dataset.act === "variant") {
-    const before = run(o);
-    state.variant = true;
-    state.lastChange = esc(describeChange(before, run(o)));
+    state.variant[o.id] = true;
+    apply(o, [...state.history[o.id], ...o.variant.events.map((ev) => ({ ...ev, at: stamp() }))]);
   }
-  render();
+  if (b.dataset.act === "restart") {
+    state.history[o.id] = [...o.events]; state.step[o.id] = 0; state.variant[o.id] = false; state.lastChange = null;
+    render();
+  }
 });
 
-let editSeq = 0;
 document.getElementById("ticket").addEventListener("change", (e) => {
   const k = e.target.dataset.fact;
   if (!k) return;
-  const o = featured.find((x) => x.id === state.current);
-  const list = (state.edits[o.id] ||= []);
-  const at = "2026-09-29T23:" + String(10 + (editSeq++ % 49)).padStart(2, "0") + ":00-06:00";
+  const o = cur();
+  const h = state.history[o.id];
   let v = e.target.value;
-  if (k === "service") list.push({ type: "service_changed", id: `edit-${editSeq}`, at, service: v });
-  else if (v === "" && list.some((x) => x.type === "fact_entered" && x.key === k)) {
-    // Emptying a value you entered takes your entry back; what the message said comes back with it.
-    state.edits[o.id] = list.filter((x) => !(x.type === "fact_entered" && x.key === k));
-    state.lastChange = "Your entry was taken back; what the message said applies again.";
-    render();
-    return;
-  } else {
-    if (e.target.type === "number") v = v === "" ? null : Number(v);
-    if (k === "ledge_or_step_at_garage") v = v === "" ? null : v === "true";
-    if (v === "") v = null;
-    list.push({ type: "fact_entered", id: `edit-${editSeq}`, at, key: k, value: v, by: "you, on this page" });
-  }
-  const before = replay(o, productOf(o), eventsFor(o).filter((x) => x.id !== `edit-${editSeq}`), ctx);
-  state.lastChange = o.walkthrough ? esc(describeChange(before, run(o))) : null;
-  render();
+  const id = `edit-${state.seq}`;
+  if (k === "service") return apply(o, [...h, { type: "service_changed", id, at: stamp(), service: v }]);
+  if (e.target.type === "number") v = v === "" ? null : Number(v);
+  if (k === "ledge_or_step_at_garage") v = v === "" ? null : v === "true";
+  if (v === "") v = null;
+  apply(o, [...h, { type: "fact_entered", id, at: stamp(), key: k, value: v, by: "you, on this page" }]);
 });
 
 render();

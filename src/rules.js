@@ -63,6 +63,7 @@ export const LABELS = {
   eligibility: "REVIEW: delivery eligibility unconfirmed",
   date: "REVIEW: requested date needs your team",
   afterRelease: "HOLD: changed after release",
+  carrier: "REVIEW: carrier update needs your team",
   pass: "PASS: this checklist is complete; operational release remains with your team",
 };
 
@@ -96,20 +97,31 @@ export function processingDays(text) {
 
 const bare = (s) => String(s).replace(/[.!?]+$/, "");
 const money = (n) => "$" + Number(n).toLocaleString("en-US", { maximumFractionDigits: 2 });
+const VALUE_WORDS = { true: "yes", false: "none", mixed_soft: "soft when wet", received: "received and reviewed", sent: "customer says sent" };
+const fmt = (v) => (String(v) in VALUE_WORDS ? VALUE_WORDS[String(v)] : String(v).replace(/_/g, " "));
+
+// Where a fact came from, in words: the customer's own words, or who entered it on the ticket.
+export function said(f, what) {
+  if (!f) return `${what}: not on file`;
+  if (f.by === "message") return `the message says "${bare(f.quote)}"`;
+  return `${what} entered on this ticket (${f.by}): ${fmt(f.value)}`;
+}
 
 // ---------- Facts from customer messages ----------
 // A quote proves where a fact came from, not that it was read correctly; these guards catch what code can catch.
+const wholeNumber = (q, n) => new RegExp(`(^|[^\\d.])${String(n).replace(".", "\\.")}(?![\\d.]*\\d)`).test(q);
 export function checkFact(key, fact, message) {
   if (!fact) return null;
   if (typeof fact.quote !== "string" || !fact.quote || !message.includes(fact.quote)) return "quote not found in the message";
   const q = fact.quote.toLowerCase();
   if (key === "narrowest_door_in") {
-    if (!/(\d+(\.\d+)?)/.test(q) || !q.includes(String(fact.value))) return "number not in the quote";
-    if (!/(inch|inches|\bin\b|"|feet|foot|ft\b|cm\b)/.test(q)) return "no unit in the quote";
+    if (!wholeNumber(q, fact.value)) return "number not in the quote";
+    if (/(\bcm\b|\bmm\b|centimet|millimet|\bmeters?\b|\bfeet\b|\bfoot\b|\bft\b)/.test(q)) return "unit is not inches";
+    if (!/(\binch(es)?\b|\bin\b|")/.test(q)) return "no unit in the quote";
   }
   if (key === "stairs_count") {
     const n = Number(fact.value);
-    const ok = q.includes(String(n)) || (NUMBER_WORDS[n] && new RegExp(`\\b${NUMBER_WORDS[n]}\\b`).test(q)) || (n === 0 && /\bno (steps|stairs)\b/.test(q));
+    const ok = wholeNumber(q, n) || (NUMBER_WORDS[n] && new RegExp(`\\b${NUMBER_WORDS[n]}\\b`).test(q)) || (n === 0 && /\bno (steps|stairs)\b/.test(q));
     if (!ok) return "count not in the quote";
   }
   return null;
@@ -135,6 +147,48 @@ export function factsFromMessages(messageEvents, texts, extractions) {
   return { facts, dropped };
 }
 
+// ---------- Event validation: supported types and the fields each one needs ----------
+export const CARRIER_STATUSES = ["in_transit", "out_for_delivery", "delivered", "exception"];
+export const CARRIER_LOCATIONS = ["terminal", "installer", "customer"];
+const FACT_KEYS = ["room_location", "floor_or_stairs_described", "stairs_count", "narrowest_door_in", "path_photos", "driveway_surface", "ledge_or_step_at_garage", "need_by", "expects_free_local_delivery"];
+export const EVENT_FIELDS = {
+  order_created: ["service"],
+  customer_message: ["message"],
+  payment_received: ["event_id", "amount", "for_service"],
+  fact_entered: ["key", "by"],
+  plan_issued: ["version", "summary"],
+  plan_approved: ["version", "by", "channel", "text"],
+  destination_changed: ["zip"],
+  service_changed: ["service"],
+  release_requested: ["by"],
+  carrier_update: ["status", "location"],
+  installation_complete: ["by"],
+};
+export function validateEvent(ev) {
+  if (!ev || typeof ev !== "object") return "event missing";
+  for (const k of ["type", "id", "at"]) if (typeof ev[k] !== "string" || !ev[k]) return `event needs ${k}`;
+  const need = EVENT_FIELDS[ev.type];
+  if (!need) return `unsupported event type "${ev.type}"`;
+  for (const k of need) if (ev[k] === undefined || ev[k] === null || ev[k] === "") return `${ev.type} needs ${k}`;
+  if (ev.type === "carrier_update") {
+    if (!CARRIER_STATUSES.includes(ev.status)) return `unknown carrier status "${ev.status}"`;
+    if (!CARRIER_LOCATIONS.includes(ev.location)) return `unknown carrier location "${ev.location}"`;
+  }
+  if (ev.type === "fact_entered" && !FACT_KEYS.includes(ev.key)) return `unknown fact "${ev.key}"`;
+  if (ev.type === "payment_received" && !(typeof ev.amount === "number" && ev.amount > 0)) return "payment amount must be a positive number";
+  return null;
+}
+
+// What a plan was written for. A plan version is immutable; its approval covers this snapshot only.
+const SNAPSHOT_FIELDS = { service: "service", zip: "delivery address", stairs_count: "step count", narrowest_door_in: "narrowest door" };
+export function snapshotOf(st) {
+  return { service: st.service, zip: st.zip, stairs_count: st.facts.stairs_count ? st.facts.stairs_count.value : null, narrowest_door_in: st.facts.narrowest_door_in ? st.facts.narrowest_door_in.value : null };
+}
+function snapshotDiff(a, b) {
+  return Object.keys(SNAPSHOT_FIELDS).filter((k) => a[k] !== b[k]).map((k) => ({ field: SNAPSHOT_FIELDS[k], was: a[k], now: b[k] }));
+}
+const diffText = (d) => d.map((x) => `${x.field} (plan: ${x.was ?? "none"}; now: ${x.now ?? "none"})`).join(", ");
+
 // ---------- Evaluation of one order state ----------
 export function evaluate(st) {
   const { product, service, zip, state: usState, geo, facts, plans, approvals, asOf } = st;
@@ -143,6 +197,7 @@ export function evaluate(st) {
   const f = (k) => facts[k] || null;
   const chosen = product.delivery_options.find((o) => o.name === service);
   const room = ROOM_SERVICE.test(service);
+  const cleared = st.cleared || {};
 
   if (!chosen) add({ id: "service", kind: "hold", group: "service", title: "Service offered for this machine", finding: `"${service}" is not among the services listed on this product page.`, owner: "Ops" });
 
@@ -153,13 +208,15 @@ export function evaluate(st) {
     const need = [
       { key: "room_location", ok: !!where, label: "Where it goes", ask: "Which room will it go in, and on which floor?" },
       { key: "narrowest_door_in", ok: !!f("narrowest_door_in"), label: "Narrowest door width", ask: "What is the width of the narrowest door on the way in, in inches?" },
-      { key: "path_photos", ok: photos && photos.value === "sent", label: photos && photos.value === "promised" ? "Path photos (promised, not received)" : "Photos of the path and turns", ask: "Could you send photos of the path from the street, including every turn?" },
+      photos && photos.value === "sent"
+        ? { key: "path_photos", ok: false, label: "Path photos: customer says sent, not yet reviewed", finding: `${said(photos, "Path photos")}. Nobody has confirmed receiving and reviewing them.`, owner: "Ops (confirm the photos arrived and review them)" }
+        : { key: "path_photos", ok: photos && photos.value === "received", label: photos && photos.value === "promised" ? "Path photos (promised, not received)" : "Photos of the path and turns", ask: "Could you send photos of the path from the street, including every turn?" },
       { key: "stairs_count", ok: f("stairs_count") != null, label: "Number of steps", ask: "How many steps are there in total between the street and the room?" },
     ];
-    const cleared = st.cleared || {};
     for (const n of need) {
       if (n.ok) continue;
-      add({ id: `access:${n.key}`, kind: "hold", group: "access", title: n.label, finding: cleared[n.key] ? `Cleared on this ticket by ${cleared[n.key]}; not on file.` : n.key === "stairs_count" && f("floor_or_stairs_described") ? `The message describes "${bare(f("floor_or_stairs_described").quote)}", which is a floor, not a step count.` : "Not on file.", quotes: [Q.accessFacts, Q.priorToShipping, Q.accessBeforeBooking], ask: n.ask, owner: "Ops" });
+      const finding = n.finding || (cleared[n.key] ? `Cleared on this ticket (${cleared[n.key]}); not on file.` : n.key === "stairs_count" && f("floor_or_stairs_described") && f("floor_or_stairs_described").by === "message" ? `The message says "${bare(f("floor_or_stairs_described").quote)}", which gives a floor, not a step count.` : "Not on file.");
+      add({ id: `access:${n.key}`, kind: "hold", group: "access", title: n.label, finding, quotes: [Q.accessFacts, Q.priorToShipping, Q.accessBeforeBooking], ask: n.ask, owner: n.owner || "Ops" });
     }
   }
 
@@ -167,10 +224,19 @@ export function evaluate(st) {
   const steps = f("stairs_count");
   if (steps && /Ground Level \(0-3 Steps\)/.test(service) && Number(steps.value) > 3) {
     const carry = product.delivery_options.find((o) => /Stair Carry/.test(o.name));
-    add({ id: "steps", kind: "hold", group: "mismatch", title: "Steps against the service paid for", finding: `Paid for ground level (0 to 3 steps); the customer describes ${steps.value} steps.` + (carry && chosen ? ` The stair carry service on this machine is ${money(carry.price)}.` : ""), evidence: steps, quotes: [Q.groundLevel, Q.stairCarry], ask: steps.by === "message" ? "Your message mentions more than 3 steps; the ground-level service covers 3 or fewer. May we move the order to the stair-carry service?" : `We have ${steps.value} steps on file between the street and the room; the ground-level service covers 3 or fewer. May we move the order to the stair-carry service?`, owner: "Ops (a price change needs the customer's OK)" });
+    add({ id: "steps", kind: "hold", group: "mismatch", title: "Steps against the service paid for", finding: `Paid for ground level (0 to 3 steps); ${said(steps, "Step count")}.` + (carry && chosen ? ` The stair carry service on this machine is ${money(carry.price)}.` : ""), evidence: steps, quotes: [Q.groundLevel, Q.stairCarry], ask: steps.by === "message" ? "Your message mentions more than 3 steps; the ground-level service covers 3 or fewer. May we move the order to the stair-carry service?" : `We have ${steps.value} steps on file between the street and the room; the ground-level service covers 3 or fewer. May we move the order to the stair-carry service?`, owner: "Ops (a price change needs the customer's OK)" });
   }
-  if (steps && /Garage Installation/.test(service) && Number(steps.value) > 0) {
-    add({ id: "steps", kind: "hold", group: "mismatch", title: "Steps against the service paid for", finding: `Garage installation needs a path with no ledges or stairs; the customer describes ${steps.value} step(s).`, evidence: steps, quotes: [Q.garageInstall], owner: "Ops" });
+
+  // Garage installation: rolled on wheels the whole way, no ledge or stair, path at least 60 in wide.
+  if (/Garage Installation/.test(service)) {
+    const door = f("narrowest_door_in");
+    const ledge = f("ledge_or_step_at_garage");
+    const bad = [];
+    if (steps && Number(steps.value) > 0) bad.push(said(steps, "Step count"));
+    if (ledge && ledge.value === true) bad.push(said(ledge, "Lip at the garage door"));
+    if (door && Number(door.value) < 60) bad.push(`${said(door, "Narrowest door")}, under the 60 in path`);
+    if (bad.length) add({ id: "garage-install", kind: "hold", group: "mismatch", title: "Garage installation path", finding: `Garage installation needs a path at least 60 in wide with no ledge or stair; ${bad.join("; ")}.`, quotes: [Q.garageInstall], owner: "Ops (another service may fit)" });
+    else if (!ledge) add({ id: "access:garage-ledge", kind: "hold", group: "access", title: "Lip or step at the garage door", finding: `${said(null, "Lip or step at the garage door")}; garage installation needs a path with no ledge.`, quotes: [Q.garageInstall], ask: "Is there any lip or step at the garage door?", owner: "Ops" });
   }
 
   // Published size against the narrowest door: a feasibility question, never "impossible".
@@ -192,19 +258,20 @@ export function evaluate(st) {
     }
   }
 
-  // Garage delivery ground conditions.
+  // Garage delivery ground conditions: both the driveway and the garage entry must be known.
   if (/Garage Delivery/.test(service)) {
     const surface = f("driveway_surface");
     const ledge = f("ledge_or_step_at_garage");
     const bad = [];
-    if (surface && ["dirt", "grass", "mixed_soft"].includes(surface.value)) bad.push(surface);
-    if (ledge && ledge.value === true) bad.push(ledge);
+    if (surface && ["dirt", "grass", "mixed_soft"].includes(surface.value)) bad.push(said(surface, "Driveway"));
+    if (ledge && ledge.value === true) bad.push(said(ledge, "Lip at the garage door"));
     if (bad.length) {
-      add({ id: "access:garage", kind: "hold", group: "access", title: "Pallet-jack path to the garage", finding: `The message describes ${bad.map((b) => `"${bare(b.quote)}"`).join(" and ")}; the service text lists softer dirt, grass and a ledge as barriers.`, quotes: [Q.garageDelivery, Q.garageConfirm], ask: "Garage delivery needs a firm path with no lip or step. Would curbside delivery work instead, or can the path be firmed up for the delivery day?", owner: "Ops" });
-    } else if (!surface) {
-      add({ id: "access:garage", kind: "hold", group: "access", title: "Pallet-jack path to the garage", finding: "Driveway surface and garage entry not on file.", quotes: [Q.garageConfirm, Q.garageDelivery], ask: "Is the path from the street to the garage paved or gravel, and is there any lip or step at the garage door?", owner: "Ops" });
-    } else if (surface.value === "gravel") {
-      add({ id: "cleared:gravel", kind: "cleared", title: "Gravel driveway", finding: `"${bare(surface.quote)}" looks like a problem for a pallet jack, but the service text names gravel as covered.`, quotes: [Q.garageDelivery] });
+      add({ id: "access:garage", kind: "hold", group: "access", title: "Pallet-jack path to the garage", finding: `${bad.join("; ")}. The service text lists softer dirt, grass and a ledge as barriers.`.replace(/^./, (c) => c.toUpperCase()), quotes: [Q.garageDelivery, Q.garageConfirm], ask: "Garage delivery needs a firm path with no lip or step. Would curbside delivery work instead, or can the path be firmed up for the delivery day?", owner: "Ops" });
+    }
+    if (!surface) add({ id: "access:garage-surface", kind: "hold", group: "access", title: "Driveway surface", finding: cleared.driveway_surface ? `Cleared on this ticket (${cleared.driveway_surface}); not on file.` : "Not on file.", quotes: [Q.garageConfirm, Q.garageDelivery], ask: "Is the path from the street to the garage paved or gravel?", owner: "Ops" });
+    if (!ledge) add({ id: "access:garage-ledge", kind: "hold", group: "access", title: "Lip or step at the garage door", finding: cleared.ledge_or_step_at_garage ? `Cleared on this ticket (${cleared.ledge_or_step_at_garage}); not on file.` : "Not on file. Unknown is not the same as none.", quotes: [Q.garageConfirm, Q.garageDelivery], ask: "Is there any lip or step at the garage door?", owner: "Ops" });
+    if (surface && surface.value === "gravel" && !bad.length) {
+      add({ id: "cleared:gravel", kind: "cleared", title: "Gravel driveway", finding: `${said(surface, "Driveway").replace(/^./, (c) => c.toUpperCase())}. That looks like a problem for a pallet jack, but the service text names gravel as covered.`, quotes: [Q.garageDelivery] });
     }
   }
 
@@ -217,7 +284,7 @@ export function evaluate(st) {
     const parts = [`Shopify shipping record: ${s} lb (${product.shopify_grams.toLocaleString("en-US")} g).`, `Product page: ${p} lb, one figure for the machine.`];
     if (maker) parts.push(`Manufacturer: ${maker.weights.map((w) => `${w.assembled_lb} lb assembled in the ${w.configuration.replace(". ", " ").toLowerCase()} configuration`).join(", ")}.`);
     if (st.configuration) parts.push(`This order: ${st.configuration}.`);
-    add({ id: "config:weight", kind: "review", group: "configuration", title: "Which weight belongs to this configuration", finding: parts.join(" "), note: "Product, assembled, per-box and gross weights are different quantities; none of these values replaces another automatically. A weight-based routing decision waits; nothing else does.", quotes: differs ? [Q.parcelOld, Q.combinedFreight] : [], makerSource: maker ? maker.source : null, owner: "Catalog owner or ops, never the customer" });
+    add({ id: "config:weight", kind: "review", group: "configuration", title: "Which weight belongs to this configuration", finding: parts.join(" "), note: "This example pauses release until Ops confirms the applicable weight and routing. It does not establish which value your checkout or warehouse uses.", quotes: differs ? [Q.parcelOld, Q.combinedFreight] : [], makerSource: maker ? maker.source : null, owner: "Catalog owner or ops, never the customer" });
   }
 
   // Zone and eligibility. Distance is a straight line between Census ZIP centroids.
@@ -254,30 +321,34 @@ export function evaluate(st) {
     if (proc) {
       const earliest = addBusinessDays(asOf, proc.min + t.min);
       if (earliest > needBy.value) {
-        add({ id: "date", kind: "review", group: "date", title: "Date the customer asked for", finding: `Needed by ${needBy.value}. The fastest published path lands ${earliest}: processing "${product.processing_time.replace(" + Transit Time", "")}" plus ${t.how}, ${t.text}.`, calc: `${asOf} + ${proc.min} business days + ${t.min} business days = ${earliest} (weekends skipped, holidays not)`, evidence: needBy, quotes: [Q.processingSeparate], owner: "Ops (only your team promises a date)" });
+        add({ id: "date", kind: "review", group: "date", title: "Date the customer asked for", finding: `Needed by ${needBy.value} (${said(needBy, "Date")}). The fastest published path lands ${earliest}: processing "${product.processing_time.replace(" + Transit Time", "")}" plus ${t.how}, ${t.text}.`, calc: `${asOf} + ${proc.min} business days + ${t.min} business days = ${earliest} (weekends skipped, holidays not)`, evidence: needBy, quotes: [Q.processingSeparate], owner: "Ops (only your team promises a date)" });
       }
     }
   }
 
-  // Authorization: a confirmed plan for this exact machine, scope and address, and the customer's written OK on that version.
+  // Authorization: the latest plan version, approved in writing, still matching the order it was written for.
   if (room) {
-    const current = Object.values(plans).filter((pl) => pl.for.service === service && pl.for.zip === zip).sort((a, b) => b.version - a.version)[0];
+    const versions = Object.keys(plans).map(Number).sort((a, b) => b - a);
+    const current = versions.length ? plans[versions[0]] : null;
     const voided = st.voided || {};
-    const approved = current && approvals[current.version] && !voided[current.version] ? approvals[current.version] : null;
-    const stale = Object.values(approvals).find((a) => voided[a.version] || !current || a.version !== current.version);
+    const drift = current ? snapshotDiff(current.snapshot, snapshotOf(st)) : [];
+    const approval = current ? approvals[current.version] : null;
     const reply = f("approval_reply");
-    if (!approved) {
+    const twoStep = /2 Step/.test(service);
+    if (approval && !voided[current.version] && !drift.length) {
+      add({ id: "authorization", kind: "pass", title: "Delivery plan and written approval", finding: `Plan version ${current.version} approved by ${approval.by} (${approval.channel}, ${approval.at.slice(0, 16).replace("T", " ")}): "${approval.text}"`, proposed: !twoStep });
+    } else {
       let finding;
-      if (stale) finding = `Plan version ${stale.version} was approved by ${stale.by}, but the ${voided[stale.version] || (plans[stale.version].for.zip !== zip ? "delivery address" : "service")} changed afterwards. That approval no longer covers this order, even if the change is undone: a new plan version needs a new approval.`;
+      if (approval) finding = `Plan version ${current.version} was approved by ${approval.by}, but ${diffText(voided[current.version] || drift)} changed afterwards. That approval no longer covers this order, even if the change is undone: a new plan version needs a new approval.`;
+      else if (current && drift.length) finding = `Plan version ${current.version} no longer matches the order: ${diffText(drift)}. Issue a new version.`;
       else if (current) finding = `Plan version ${current.version} was sent; no written approval of it yet.`;
       else finding = reply ? `The message says "${bare(reply.quote)}". No plan with crew, scope, price and timing has been confirmed yet, so this is a preliminary reply, not approval.` : "No plan with crew, scope, price and timing confirmed yet.";
-      if (reply && reply.value === "final_written_yes" && Object.keys(plans).length === 0) finding += " (The extraction model labelled it a final yes. The rule does not take its word.)";
-      add({ id: "authorization", kind: "hold", group: "authorization", title: "Delivery plan and written approval", finding, quotes: /2 Step/.test(service) ? [Q.twoStepPrelim, Q.twoStepFinal] : [Q.feasibility, Q.confirmedBeforeBooking], setByUs: /2 Step/.test(service) ? null : "Your pages require a final written YES for the two-step plan. This test applies the same to any room service: the customer approves the confirmed plan version in writing.", owner: "Ops (send the plan, record who approved which version)" });
-    } else {
-      add({ id: "authorization", kind: "pass", title: "Delivery plan and written approval", finding: `Plan version ${current.version} approved by ${approved.by} (${approved.channel}, ${approved.at.slice(0, 16).replace("T", " ")}): "${approved.text}"` });
+      if (reply && reply.value === "final_written_yes" && versions.length === 0) finding += " (The extraction model labelled it a final yes. The rule does not take its word.)";
+      add({ id: "authorization", kind: "hold", group: "authorization", title: "Delivery plan and written approval", finding, proposed: !twoStep, quotes: twoStep ? [Q.twoStepPrelim, Q.twoStepFinal] : [Q.feasibility, Q.confirmedBeforeBooking], owner: "Ops (send the plan, record who approved which version)" });
     }
   }
 
+  if (st.carrierIssue) add({ id: "carrier", kind: "review", group: "carrier", title: "Carrier update", finding: st.carrierIssue, owner: "Ops" });
   if (st.changedAfterRelease) {
     add({ id: "after-release", kind: "hold", group: "afterRelease", title: "Changed after release", finding: `The order was already released to the carrier when ${st.changedAfterRelease} changed. Nothing here recalls a shipment; your team decides with the carrier and issues a new plan.`, owner: "Ops (carrier and new plan)" });
   }
@@ -287,6 +358,8 @@ export function evaluate(st) {
   const label = holds.length ? LABELS[holds[0].group] : reviews.length ? LABELS[reviews[0].group] : LABELS.pass;
   return { verdict, label, issues, miles, zone, openIds: [...holds, ...reviews].map((i) => i.id) };
 }
+
+export const PROPOSED_APPROVAL = "Proposed approval control: this example requires written customer approval of the confirmed plan.";
 
 // ---------- Business actions and replay ----------
 export class MemoryLedger {
@@ -322,27 +395,43 @@ export function initialState(order, product, ctx) {
   return {
     order, product, asOf: ctx.asOf, service: null, zip: order.zip, city: order.city, state: order.state,
     geo: ctx.zips[order.zip], configuration: order.configuration || null, maker: ctx.manufacturer ? ctx.manufacturer[order.handle] || null : null,
-    facts: {}, dropped: [], messages: [], earlierMessages: [], cleared: {}, voided: {}, changedAfterRelease: null, draft: null, plans: {}, approvals: {}, payments: [], freight: "not shipped", customerDelivery: "open", installation: "open", released: false,
+    facts: {}, dropped: [], messages: [], earlierMessages: [], cleared: {}, voided: {}, changedAfterRelease: null, carrierIssue: null, draft: null, plans: {}, approvals: {}, payments: [], freight: "not shipped", customerDelivery: "open", installation: "open", released: false,
   };
 }
+
+const OWNED_HOLDS = ["gid://shopify/FulfillmentHold/demo-access", "gid://shopify/FulfillmentHold/demo-plan"];
 
 export function replay(order, product, events, ctx, ledger = new MemoryLedger()) {
   const st = initialState(order, product, ctx);
   const seenDeliveries = new Set();
+  const seenBusiness = new Set();
   const timeline = [];
   let result = null;
   for (const ev of events) {
     const entry = { event: ev, effects: [], actions: [] };
-    if (ev.webhook_id) {
-      if (seenDeliveries.has(ev.webhook_id)) {
-        entry.duplicate = true;
-        entry.effects.push(`Duplicate delivery ${ev.webhook_id} ignored${ev.event_id ? ` (same event ${ev.event_id})` : ""}.`);
-        entry.result = result;
-        timeline.push(entry);
-        continue;
-      }
-      seenDeliveries.add(ev.webhook_id);
+    const invalid = validateEvent(ev);
+    if (invalid) {
+      entry.rejected = true;
+      entry.effects.push(`Event rejected: ${invalid}. Nothing changed.`);
+      entry.result = result;
+      entry.status = { freight: st.freight, customerDelivery: st.customerDelivery, installation: st.installation, released: st.released };
+      timeline.push(entry);
+      continue;
     }
+    // Two kinds of duplicate: the same delivery (webhook id) and the same business event under a new delivery (event id).
+    // Neither changes the order.
+    const dupDelivery = ev.webhook_id && seenDeliveries.has(ev.webhook_id);
+    const dupBusiness = ev.event_id && seenBusiness.has(ev.event_id);
+    if (dupDelivery || dupBusiness) {
+      entry.duplicate = true;
+      entry.effects.push(dupDelivery ? `Duplicate delivery ${ev.webhook_id} ignored${ev.event_id ? ` (same event ${ev.event_id})` : ""}.` : `Event ${ev.event_id} arrived again under a new delivery id (${ev.webhook_id || "none"}); already applied, nothing changed.`);
+      entry.result = result;
+      entry.status = { freight: st.freight, customerDelivery: st.customerDelivery, installation: st.installation, released: st.released };
+      timeline.push(entry);
+      continue;
+    }
+    if (ev.webhook_id) seenDeliveries.add(ev.webhook_id);
+    if (ev.event_id) seenBusiness.add(ev.event_id);
     switch (ev.type) {
       case "order_created": st.service = ev.service; entry.effects.push(`Order created: ${ev.service}.`); break;
       case "customer_message": {
@@ -355,11 +444,13 @@ export function replay(order, product, events, ctx, ledger = new MemoryLedger())
         break;
       }
       case "payment_received": {
-        const rec = ledger.once(`payment:${ev.event_id || ev.webhook_id}`, { amount: ev.amount, for: ev.for_service });
-        if (rec.created) st.payments.push({ amount: ev.amount, for: ev.for_service, at: ev.at });
-        const changed = ev.for_service && ev.for_service !== st.service;
-        if (changed) st.service = ev.for_service;
-        entry.effects.push(`Payment of ${money(ev.amount)} ${rec.created ? "recorded" : "already recorded, not added again"}${changed ? `; service is now ${ev.for_service}` : ""}. Holds are re-checked, never released by a payment.`);
+        // Rebuilding the order's state and suppressing external actions are separate jobs: duplicates were already
+        // skipped above by event id, so this event is new to the order. The ledger only records the business action.
+        st.payments.push({ amount: ev.amount, for: ev.for_service, at: ev.at });
+        ledger.once(`payment:${ev.event_id}`, { amount: ev.amount, for: ev.for_service });
+        const changed = ev.for_service !== st.service;
+        if (changed) { st.service = ev.for_service; if (st.released) st.changedAfterRelease = "the service"; }
+        entry.effects.push(`Payment of ${money(ev.amount)} recorded${changed ? `; service is now ${ev.for_service}` : ""}. Holds are re-checked, never released by a payment.`);
         break;
       }
       case "fact_entered": {
@@ -369,44 +460,57 @@ export function replay(order, product, events, ctx, ledger = new MemoryLedger())
         if (bad) { entry.effects.push(`${ev.by}: ${label} = ${ev.value} not accepted (not a valid value); previous value kept.`); break; }
         if (st.released) st.changedAfterRelease = label;
         if (ev.value === null || ev.value === undefined || ev.value === "") { delete st.facts[ev.key]; st.cleared[ev.key] = ev.by; entry.effects.push(`${ev.by} cleared ${label}.`); }
-        else { st.facts[ev.key] = { value: ev.value, quote: null, by: ev.by, at: ev.at }; delete st.cleared[ev.key]; entry.effects.push(`${ev.by}: ${label} = ${ev.value}.`); }
+        else { st.facts[ev.key] = { value: ev.value, quote: null, by: ev.by, at: ev.at }; delete st.cleared[ev.key]; entry.effects.push(`${ev.by}: ${label} = ${fmt(ev.value)}.`); }
         break;
       }
-      case "plan_issued": st.plans[ev.version] = { ...ev }; entry.effects.push(`Plan version ${ev.version} sent to the customer.`); break;
-      case "plan_approved": st.approvals[ev.version] = { ...ev }; entry.effects.push(`${ev.by} approved plan version ${ev.version} in writing (${ev.channel}).`); break;
+      case "plan_issued":
+        if (st.plans[ev.version]) { entry.effects.push(`Plan version ${ev.version} already exists; plan versions are immutable. Issue a new version instead.`); entry.refused = true; break; }
+        st.plans[ev.version] = { version: ev.version, summary: ev.summary, at: ev.at, snapshot: snapshotOf(st) };
+        entry.effects.push(`Plan version ${ev.version} sent to the customer, written for ${st.service}, ZIP ${st.zip}.`);
+        break;
+      case "plan_approved":
+        if (!st.plans[ev.version]) { entry.effects.push(`Approval for plan version ${ev.version}, which was never issued: not recorded.`); entry.refused = true; break; }
+        st.approvals[ev.version] = { ...ev };
+        entry.effects.push(`${ev.by} approved plan version ${ev.version} in writing (${ev.channel}).`);
+        break;
       case "destination_changed": {
-        st.zip = ev.zip; st.city = ev.city; st.geo = ctx.zips[ev.zip] || st.geo;
-        // Access facts describe a place: none of them carries over to a new address.
+        st.zip = ev.zip; st.city = ev.city || st.city; st.geo = ctx.zips[ev.zip] || st.geo;
         for (const k of LOCATION_FACTS) delete st.facts[k];
         st.earlierMessages.push(...st.messages);
         st.messages = [];
-        for (const v of Object.keys(st.approvals)) st.voided[v] = st.voided[v] || "delivery address";
         if (st.released) st.changedAfterRelease = "the delivery address";
         entry.effects.push(`Delivery address changed to ZIP ${ev.zip}. Room, stairs, door and photos on file described the old address and were set aside.`);
         break;
       }
       case "service_changed":
-        if (ev.service !== st.service) {
-          for (const v of Object.keys(st.approvals)) st.voided[v] = st.voided[v] || "service";
-          if (st.released) st.changedAfterRelease = "the service";
-        }
+        if (st.released && ev.service !== st.service) st.changedAfterRelease = "the service";
         st.service = ev.service; entry.effects.push(`Service changed to ${ev.service}.`); break;
       case "release_requested": {
         const r = evaluate(st);
+        if (st.released) { entry.effects.push("Already released; nothing to do."); break; }
         if (r.verdict !== "PASS") { entry.effects.push(`Release refused: ${r.label}.`); entry.refused = true; break; }
-        const owned = ["gid://shopify/FulfillmentHold/demo-access", "gid://shopify/FulfillmentHold/demo-plan"];
-        const req = buildReleaseHold({ fulfillmentOrderId: `gid://shopify/FulfillmentOrder/demo-${order.id}`, holdIds: ev.hold_ids === "owned" ? owned : ev.hold_ids, ownedHoldIds: owned });
+        const req = buildReleaseHold({ fulfillmentOrderId: `gid://shopify/FulfillmentOrder/demo-${order.id}`, holdIds: OWNED_HOLDS, ownedHoldIds: OWNED_HOLDS });
         st.released = true;
         entry.release = req;
         entry.effects.push(`${ev.by} released the order, naming the ${req.variables.holdIds.length} holds this workflow owns.`);
         break;
       }
-      case "carrier_update":
-        if (ev.location === "installer") { st.freight = "at installer"; entry.effects.push(`${ev.label}. Freight leg done; customer delivery and installation still open.`); }
-        else { st.freight = "delivered"; st.customerDelivery = "delivered"; entry.effects.push("Carrier confirms delivery to the customer."); }
+      case "carrier_update": {
+        if (!st.released) { st.carrierIssue = `Carrier reported "${fmt(ev.status)}" at ${ev.location} for an order that was never released. Nothing advanced.`; entry.effects.push(st.carrierIssue); break; }
+        const where = ev.location;
+        if (ev.status === "exception") { st.freight = "exception"; st.carrierIssue = `Carrier exception${ev.label ? `: ${ev.label}` : ""}. Nothing advanced.`; entry.effects.push(st.carrierIssue); break; }
+        if (ev.status !== "delivered") { st.freight = "in transit"; entry.effects.push(`Carrier: ${fmt(ev.status)}${where ? ` (${where})` : ""}. In transit; nothing completed.`); break; }
+        if (where === "customer") { st.freight = "delivered"; st.customerDelivery = "delivered"; entry.effects.push("Carrier confirms delivery to the customer's address."); }
+        else { st.freight = where === "installer" ? "at installer" : "at terminal"; entry.effects.push(`${ev.label || `Delivered to the ${where}`}. Freight leg done; customer delivery and installation still open.`); }
         break;
-      case "installation_complete": st.installation = "installed"; st.customerDelivery = "delivered"; entry.effects.push("Installer confirms installation at the customer's address."); break;
-      default: entry.effects.push(`Unknown event type ${ev.type}; ignored.`);
+      }
+      case "installation_complete": st.installation = "installed"; st.customerDelivery = "delivered"; entry.effects.push(`${ev.by} confirms installation at the customer's address.`); break;
+    }
+    // Plans are written for a snapshot of the order. Once an approved plan stops matching, its approval is void for good.
+    for (const v of Object.keys(st.approvals)) {
+      if (st.voided[v]) continue;
+      const d = snapshotDiff(st.plans[v].snapshot, snapshotOf(st));
+      if (d.length) st.voided[v] = d;
     }
     result = evaluate(st);
     {

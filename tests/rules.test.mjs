@@ -25,7 +25,7 @@ test("expected verdict for every fixture", () => {
 
 test("access evidence: each missing fact is its own hold; complete evidence clears them", () => {
   assert.deepEqual(ids(run("1045")).filter((i) => i.startsWith("access")), ["access:narrowest_door_in", "access:path_photos", "access:stairs_count"]);
-  const full = evaluate(state("1045", { facts: { room_location: fact("basement"), narrowest_door_in: fact(36), path_photos: fact("sent"), stairs_count: fact(12) } }));
+  const full = evaluate(state("1045", { facts: { room_location: fact("basement"), narrowest_door_in: fact(36), path_photos: fact("received"), stairs_count: fact(12) } }));
   assert.equal(full.issues.filter((i) => i.id.startsWith("access")).length, 0);
 });
 
@@ -53,7 +53,7 @@ test("no tracking number on a local order is a legitimate path, not an alarm", (
 });
 
 test("an assembled machine wider than the door asks for a feasibility decision, never 'impossible'", () => {
-  const r = evaluate(state("1041", { facts: { room_location: fact("den"), narrowest_door_in: fact(20), path_photos: fact("sent"), stairs_count: fact(0) } }));
+  const r = evaluate(state("1041", { facts: { room_location: fact("den"), narrowest_door_in: fact(20), path_photos: fact("received"), stairs_count: fact(0) } }));
   const door = r.issues.find((i) => i.id === "door");
   assert.equal(door.kind, "review");
   assert.doesNotMatch(door.finding, /impossible|cannot/i);

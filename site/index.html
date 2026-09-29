@@ -25,8 +25,10 @@
 
 <header class="intro">
   <h1><span>Payment confirmed.</span> <span>Delivery release still blocked.</span></h1>
-  <p class="lede">Test order using public product information and fictional customer messages. No connection to your store.</p>
-  <p class="fine">Machines, services and prices as listed on fitnesssuperstore.com on September 29, 2026. Every rule below quotes your own pages; where we set something ourselves, the ticket says so.</p>
+  <p class="lede">Fictional orders, using your public products and delivery rules. No store connection. Proposed controls are marked.</p>
+  <details class="source-note"><summary>Sources and method</summary>
+    <p>Machines, services and prices as listed on fitnesssuperstore.com on September 29, 2026, with the manufacturer's specification where noted. Customers, messages and events are invented. Each rule quotes the page it comes from; anything we set ourselves is marked on the ticket. A model read each fictional message once, when this page was built; the page calls no model.</p>
+  </details>
 </header>
 
 <main class="desk">
@@ -34,23 +36,27 @@
     <ol id="stubs"></ol>
   </nav>
   <div class="work">
-    <section id="walk" class="walk" aria-label="Walk the order through"></section>
-    <article class="ticket" id="ticket" aria-live="polite"></article>
+    <section id="now" class="now" aria-live="polite" aria-label="Current state and next step"></section>
+    <article class="ticket" id="ticket"></article>
   </div>
 </main>
 
 <section class="notes">
   <div class="note-col">
-    <h2>How a verdict is made</h2>
-    <p>The rules are plain code, written from Shipping Information and the product pages. A model did one job, once, when this page was built: read each fictional customer message and return facts with the exact words they came from. The code throws away any fact whose words are not in the message, any width without a unit, and any extraction made from a different version of the message. A quote proves where a fact came from, not that it was read right, so the repository tests negations, corrections and conflicting messages.</p>
+    <h2>Where it would run</h2>
+    <p>This check would run inside your existing n8n handoff. Your team would keep its current tools and retain release decisions.</p>
+    <p class="next">Compare this with one of your delivery handoffs in 15 minutes: <a href="https://cal.theaipipe.com">cal.theaipipe.com</a></p>
   </div>
   <div class="note-col">
-    <h2>Where it would run</h2>
-    <p>A HOLD written to monday.com is a warning, not a lock. In production the check would sit on the route that actually releases a shipment. Shopify's fulfillmentOrderReleaseHold releases every hold when holdIds is left out, so the code refuses any release that does not name the holds it owns. Duplicates are caught on the webhook id and recorded in a durable action log, because monday.com's idempotency cache lasts 30 minutes. The <a href="https://github.com/fred1433/delivery-release-check">repository</a> has the n8n workflow, run on a clean n8n 2.41 with these same orders, and 56 tests.</p>
+    <h2>What is and is not connected</h2>
+    <p>The browser demonstrates event replay without external writes. The repository includes an n8n test workflow and a separately tested persistent action ledger. The production action executor is not connected. A checklist PASS is not a release; only your team releases.</p>
+    <details class="api"><summary>API details</summary>
+      <p>Shopify's fulfillmentOrderReleaseHold releases every hold when holdIds is left out, so the code refuses any release that does not name the holds it owns. Deliveries are deduplicated on the webhook id and business events on the event id; neither kind of duplicate changes the order. monday.com's idempotency cache lasts 30 minutes, which is why actions need a persistent record. The <a href="https://github.com/fred1433/delivery-release-check">repository</a> has the n8n workflow, run on a clean n8n 2.41, and 74 tests.</p>
+    </details>
   </div>
   <div class="note-col">
     <h2>What it does not do</h2>
-    <p>It schedules nothing, contacts no one and changes nothing in Shopify, Gorgias or monday.com. Your team keeps every decision on customers, dates and the warehouse. When two of your pages differ, it records both and names who has to decide; it does not pick a side. The order structure is illustrative: how your add-ons and payments are really recorded has not been checked.</p>
+    <p>It schedules nothing, contacts no one and changes nothing in Shopify, Gorgias or monday.com. When two of your pages differ, it records both and names who has to decide. The order structure is illustrative: how your add-ons and payments are really recorded has not been checked.</p>
   </div>
 </section>
 
